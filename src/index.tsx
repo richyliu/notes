@@ -1,17 +1,16 @@
 /**
  * Index file loaded by Webpack. Should remain largely the same (rendering
- * Bootstrap). Most code logic should go in Bootstrap
+ * App). Most code logic should go in App
  */
 
 import React from 'react';
 import * as ReactDOM from 'react-dom';
 
-import './index.scss';
-import Bootstrap from './Bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-ReactDOM.render(<Bootstrap />, document.getElementById('root') as HTMLElement);
+import App from './App';
+
+ReactDOM.render(<App />, document.getElementById('root') as HTMLElement);
 
 declare const module: any;
-if (module.hot) {
-  module.hot.accept();
-}
+if (module.hot) module.hot.accept();

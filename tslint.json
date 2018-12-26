@@ -18,14 +18,18 @@
           "objects": "always",
           "arrays": "always",
           "functions": "never",
-          "typeLiterals": "always",
-          "imports": "never",
-          "exports": "never"
+          "typeLiterals": "always"
         },
         "singleline": "never"
       }
     ],
-    "quotemark": [true, "single", "jsx-double"]
+    "quotemark": [true, "single", "jsx-double"],
+    "curly": [true, "ignore-same-line"],
+    "object-curly-spacing": true,
+    "space-in-parens": true,
+    "arrow-parens": [true, "ban-single-arg-parens"],
+    "comment-format": false,
+    "no-empty": false
   },
   "linterOptions": {
     "exclude": [

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "baseUrl": ".",
-    "outDir": "build/dist",
+    "outDir": "docs",
     "module": "esnext",
     "target": "es6",
     "lib": ["es2017", "dom"],
@@ -32,6 +32,6 @@
     "src/setupTests.ts",
     "*.config.js",
     "stories/*",
-    "dist/*"
+    "docs/"
   ]
 }

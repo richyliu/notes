@@ -1,6 +1,5 @@
 const path = require('path');
 
-const ExtractTextPlugin = require("extract-text-webpack-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
@@ -9,7 +8,7 @@ module.exports = {
         extensions: ['.ts', '.tsx']
     },
     output: {
-        path: path.join(__dirname, 'dist'),
+        path: path.join(__dirname, 'docs'),
         filename: 'js/bundle.js'
     },
     module: {
@@ -21,16 +20,6 @@ module.exports = {
             {
                 test: /\.css$/,
                 use: ['style-loader', 'css-loader']
-            },
-            {
-                test: /\.scss$/,
-                use: ExtractTextPlugin.extract({
-                    fallback: 'style-loader',
-                    use: [
-                        'css-loader',
-                        'sass-loader'
-                    ]
-                })
             }
         ],
     },
@@ -43,8 +32,7 @@ module.exports = {
     plugins: [
         new HtmlWebpackPlugin({
             template: './src/index.html'
-        }),
-        new ExtractTextPlugin('css/index.css')
+        })
     ],
     devServer: {
         historyApiFallback: true
