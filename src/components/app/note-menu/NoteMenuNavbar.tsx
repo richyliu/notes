@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NoteMenuNavbar: React.FunctionComponent = () => {
+const NoteMenuNavbar: React.FC = () => {
   return <div>note menu navbar</div>;
 };
 

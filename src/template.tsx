@@ -1,6 +1,6 @@
 import React from 'react';
 
-const TEMPLATE: React.FunctionComponent = () => {
+const TEMPLATE: React.FC = () => {
   return (
     <div>
       <p>TEMPLATE</p>

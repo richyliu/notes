@@ -1,6 +1,6 @@
 import React from 'react';
 
-const NotesList: React.FunctionComponent = () => {
+const NotesList: React.FC = () => {
   return (
     <div>
       <p>NotesList</p>

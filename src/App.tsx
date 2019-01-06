@@ -9,7 +9,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 import Base from './components/Base';
 
-const App: React.FunctionComponent = () => {
+const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Base />

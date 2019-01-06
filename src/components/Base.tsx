@@ -3,7 +3,7 @@ import { Switch, Route } from 'react-router';
 import App from './app/App';
 import Page404 from './404/Page404';
 
-const Base: React.FunctionComponent = () => {
+const Base: React.FC = () => {
   return (
     <Switch>
       <Route exact path="/" component={App} />

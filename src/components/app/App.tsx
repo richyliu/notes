@@ -1,13 +1,13 @@
 import React from 'react';
 
 import NoteMenu from './note-menu/NoteMenu';
-import EditorWrapper from './editor/EditorWrapper';
+import Editor from './editor/Editor';
 
-const App: React.FunctionComponent = () => {
+const App: React.FC = () => {
   return (
     <div>
       <NoteMenu />
-      <EditorWrapper />
+      <Editor />
     </div>
   );
 };
