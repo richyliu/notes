@@ -3,14 +3,28 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 
 import { Editor as SlateEditor } from 'slate-react';
-import { Value } from 'slate';
+import { Value, ValueJSON } from 'slate';
 import Markdown from 'slate-md-serializer';
+import EditList from '@guestbell/slate-edit-list';
 
 import { save, load } from 'src/database/notes';
 import MarkdownRenderPlugin from './plugins/markdown-render';
-import MarkdownPreviewPlugin from './plugins/markdown-preview';
+import MarkdownPreviewPlugin, { listTypes } from './plugins/markdown-preview';
+import ShortcutsPlugin from './plugins/shortcuts';
 
-const plugins = [MarkdownRenderPlugin(), MarkdownPreviewPlugin()];
+const list = EditList({
+  types: listTypes,
+  typeItem: 'list-item',
+});
+
+const plugins = [
+  ShortcutsPlugin(),
+  MarkdownRenderPlugin(),
+  MarkdownPreviewPlugin({
+    wrapInList: list.changes.wrapInList,
+  }),
+  list,
+];
 
 const StyledEditor = styled(SlateEditor)`
   border: 3px solid black;
@@ -22,11 +36,32 @@ const StyledEditor = styled(SlateEditor)`
 const md = new Markdown();
 
 const Editor: React.FC = () => {
-  const [value, setValue] = useState<Value>(Value.fromJSON(load()));
+  const [value, setValue] = useState<Value>(Value.fromJSON(load())
+    // Value.fromJS({
+    //   document: {
+    //     nodes: [
+    //       {
+    //         object: 'block',
+    //         type: 'paragraph',
+    //         nodes: [
+    //           {
+    //             object: 'text',
+    //             leaves: [
+    //               {
+    //                 text: 'A line of text in a paragraph. **foo bar**',
+    //               },
+    //             ],
+    //           },
+    //         ],
+    //       },
+    //     ],
+    //   },
+    // } as ValueJSON)
+  );
 
   function onChange({ value: newValue }: { value: Value }) {
     if (value.document !== newValue.document) {
-      // console.log(newValue.document);
+      console.log(newValue.document);
       save(newValue.toJSON());
       // console.log(md.serialize(newValue));
     }

@@ -7,55 +7,65 @@ import { Plugin } from 'slate-react';
 
 export default function MarkdownRenderPlugin(options?) {
   return {
-    renderNode(props, editor, next) {
-      const { attributes, children } = props;
+    renderNode(props, _, next) {
+      // pull these props off to silence warnings, hopefully no impact on performance?
+      const { isSelected, isFocused, ...rest } = props;
 
       switch (props.node.type) {
+        case 'list-content':
         case 'paragraph':
-          return <p {...props} />;
+          return <p>{rest.children}</p>;
         case 'block-quote':
-          return <blockquote {...attributes}>{children}</blockquote>;
+          return <blockquote {...rest} />;
         case 'bulleted-list':
-          return <ul {...attributes}>{children}</ul>;
+          return <ul {...rest} />;
         case 'ordered-list':
-          return <ol {...attributes}>{children}</ol>;
+          return <ol {...rest} />;
+        case 'ordered-list-lower-alpha':
+          return <ol type="a" {...rest} />;
+        case 'ordered-list-upper-alpha':
+          return <ol type="A" {...rest} />;
+        case 'ordered-list-lower-roman':
+          return <ol type="i" {...rest} />;
+        case 'ordered-list-upper-roman':
+          return <ol type="I" {...rest} />;
         case 'todo-list':
-          return <ul {...attributes}>{children}</ul>;
+          return <ul {...rest} />;
         case 'table':
-          return <table {...attributes}>{children}</table>;
+          return <table {...rest} />;
         case 'table-row':
-          return <tr {...attributes}>{children}</tr>;
+          return <tr {...rest} />;
         case 'table-head':
-          return <th {...attributes}>{children}</th>;
+          return <th {...rest} />;
         case 'table-cell':
-          return <td {...attributes}>{children}</td>;
+          return <td {...rest} />;
         case 'list-item':
-          return <li {...attributes}>{children}</li>;
+          return <li {...rest} />;
         case 'horizontal-rule':
           return <hr />;
         case 'code':
-          return <code {...attributes}>{children}</code>;
+          return <code {...rest} />;
         case 'image':
-          return <img src={(props as any).src} title={(props as any).title} />;
+          return <img src={(rest as any).src} title={(rest as any).title} />;
         case 'link':
-          return <a href={(props as any).href}>{children}</a>;
+          return <a href={(rest as any).href} {...rest} />;
         case 'heading1':
-          return <h1 {...attributes}>{children}</h1>;
+          return <h1 {...rest} />;
         case 'heading2':
-          return <h2 {...attributes}>{children}</h2>;
+          return <h2 {...rest} />;
         case 'heading3':
-          return <h3 {...attributes}>{children}</h3>;
+          return <h3 {...rest} />;
         case 'heading4':
-          return <h4 {...attributes}>{children}</h4>;
+          return <h4 {...rest} />;
         case 'heading5':
-          return <h5 {...attributes}>{children}</h5>;
+          return <h5 {...rest} />;
         case 'heading6':
-          return <h6 {...attributes}>{children}</h6>;
+          return <h6 {...rest} />;
         default:
           return next();
       }
     },
-    renderMark(props, editor, next) {
+    renderMark(props, _, next) {
       const { children } = props;
 
       switch (props.mark.type) {
@@ -65,7 +75,7 @@ export default function MarkdownRenderPlugin(options?) {
           return <code>{children}</code>;
         case 'italic':
           return <em>{children}</em>;
-        case 'underlined':
+        case 'underline':
           return <u>{children}</u>;
         case 'deleted':
           return <del>{children}</del>;
