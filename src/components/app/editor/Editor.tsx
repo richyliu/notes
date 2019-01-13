@@ -1,74 +1,43 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-import styled from 'styled-components';
+import { UnControlled as CodeMirror } from 'react-codemirror2';
 
-import { Editor as SlateEditor } from 'slate-react';
-import { Value, ValueJSON } from 'slate';
-import Markdown from 'slate-md-serializer';
-import EditList from '@guestbell/slate-edit-list';
+import 'codemirror/lib/codemirror.css';
+import 'codemirror/theme/monokai.css';
+import 'codemirror/mode/markdown/markdown';
 
 import { save, load } from 'src/database/notes';
-import MarkdownRenderPlugin from './plugins/markdown-render';
-import MarkdownPreviewPlugin, { listTypes } from './plugins/markdown-preview';
-import ShortcutsPlugin from './plugins/shortcuts';
-
-const list = EditList({
-  types: listTypes,
-  typeItem: 'list-item',
-});
-
-const plugins = [
-  ShortcutsPlugin(),
-  MarkdownRenderPlugin(),
-  MarkdownPreviewPlugin({
-    wrapInList: list.changes.wrapInList,
-  }),
-  list,
-];
-
-const StyledEditor = styled(SlateEditor)`
-  border: 3px solid black;
-  padding: 5px;
-  margin: 5px;
-  font-family: 'verdana';
-`;
-
-const md = new Markdown();
 
 const Editor: React.FC = () => {
-  const [value, setValue] = useState<Value>(Value.fromJSON(load())
-    // Value.fromJS({
-    //   document: {
-    //     nodes: [
-    //       {
-    //         object: 'block',
-    //         type: 'paragraph',
-    //         nodes: [
-    //           {
-    //             object: 'text',
-    //             leaves: [
-    //               {
-    //                 text: 'A line of text in a paragraph. **foo bar**',
-    //               },
-    //             ],
-    //           },
-    //         ],
-    //       },
-    //     ],
-    //   },
-    // } as ValueJSON)
+  return (
+    <CodeMirror
+      value={load()}
+      options={{
+        mode: 'markdown',
+        theme: 'monokai',
+        indentUnit: 4,
+        indentWithTabs: true,
+        extraKeys: {
+          'Cmd-Backspace': cm => cm.execCommand('delWordBefore'),
+          'Alt-Z': cm => cm.execCommand('undo'),
+          'Shift-Alt-Z': cm => cm.execCommand('redo'),
+        },
+      }}
+      onKeyDown={(cm, e) => {
+        // unindent if backspace is pressed in list
+        if ((e as KeyboardEvent).key == 'Backspace') {
+          const cursor = cm.getCursor();
+          const token = cm.getTokenAt(cursor);
+          // token starts at beginning of line and only has tabs
+          if (token.start == 0 && /^\t+$/.test(token.string)) {
+            cm.indentLine(cursor.line, 'subtract');
+            (e as KeyboardEvent).preventDefault();
+          }
+        }
+      }}
+      onChange={(_, __, value) => save(value)}
+    />
   );
-
-  function onChange({ value: newValue }: { value: Value }) {
-    if (value.document !== newValue.document) {
-      console.log(newValue.document);
-      save(newValue.toJSON());
-      // console.log(md.serialize(newValue));
-    }
-    setValue(newValue);
-  }
-
-  return <StyledEditor {...{ value, plugins, onChange }} />;
 };
 
 export default Editor;

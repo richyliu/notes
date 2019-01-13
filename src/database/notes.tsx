@@ -1,15 +1,14 @@
 import { ValueJSON } from 'slate';
 
-const __STORAGE_KEY = 'default';
-const __INITIAL_TEXT = `{"document":{"nodes":[{"object":"block","type":"paragraph","nodes":[{"object":"text","leaves":[{
-  "text":"A line of text in a paragraph."}]}]}]}}`;
+const __STORAGE_KEY = 'notes_default';
+const __INITIAL_TEXT = 'Hello world';
 
-type Note = ValueJSON;
+type Note = string;
 
 export function save(str: Note) {
-  localStorage.setItem(__STORAGE_KEY, JSON.stringify(str));
+  localStorage.setItem(__STORAGE_KEY, str);
 }
 
 export function load(): Note {
-  return JSON.parse(localStorage.getItem(__STORAGE_KEY) || __INITIAL_TEXT);
+  return localStorage.getItem(__STORAGE_KEY) || __INITIAL_TEXT;
 }

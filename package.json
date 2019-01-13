@@ -19,6 +19,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.1.6",
+    "@types/codemirror": "0.0.71",
     "@types/jest": "^23.3.9",
     "@types/node": "^10.12.9",
     "@types/react": "^16.7.6",
@@ -32,7 +33,6 @@
     "awesome-typescript-loader": "^5.2.1",
     "babel-loader": "^8.0.4",
     "css-loader": "^1.0.1",
-    "fsevents": "^2.0.1",
     "html-webpack-plugin": "^3.2.0",
     "jest": "^23.6.0",
     "prettier": "^1.15.2",
@@ -48,7 +48,9 @@
   "dependencies": {
     "@guestbell/slate-edit-list": "^0.3.0",
     "bootstrap": "^4.1.3",
+    "codemirror": "^5.42.2",
     "react": "^16.7.0-alpha.2",
+    "react-codemirror2": "^5.1.0",
     "react-dom": "^16.7.0-alpha.2",
     "react-router-dom": "^4.3.1",
     "reactstrap": "^6.5.0",
