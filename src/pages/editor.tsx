@@ -6,16 +6,15 @@ import 'codemirror/theme/monokai.css';
 import 'codemirror/mode/markdown/markdown';
 import { load, save } from '../database/notes';
 import convertMd from '../utils/convertMd';
+import config from '../utils/config';
 
 const Editor: React.FC = () => (
 	<div>
 		<CodeMirror
 			value={load()}
+			onChange={(_, __, value) => save(value)}
 			options={{
-				mode: 'markdown',
-				theme: 'monokai',
-				indentUnit: 4,
-				indentWithTabs: true,
+				...config.codemirror.options,
 				extraKeys: {
 					'Cmd-Backspace': cm => cm.execCommand('delWordBefore'),
 					'Alt-Z': cm => cm.execCommand('undo'),
@@ -24,21 +23,10 @@ const Editor: React.FC = () => (
 						navigate(`/render?html=${convertMd(cm.getValue())}`),
 				},
 			}}
-			onKeyDown={(cm, e) => {
-				// unindent if backspace is pressed in list
-				if ((e as KeyboardEvent).key == 'Backspace') {
-					const cursor = cm.getCursor();
-					const token = cm.getTokenAt(cursor);
-					// token starts at beginning of line and only has tabs
-					if (token.start == 0 && /^\t+$/.test(token.string)) {
-						cm.indentLine(cursor.line, 'subtract');
-						(e as KeyboardEvent).preventDefault();
-					}
-				}
-			}}
-			onChange={(_, __, value) => save(value)}
+			onKeyDown={config.codemirror.onKeyDown}
 		/>
-		<p />
+
+		<div id="dmermaid" />
 	</div>
 );
 
