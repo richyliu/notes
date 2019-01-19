@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled from '../utils/theme';
 
 import 'highlight.js/styles/github.css';
 import 'katex/dist/katex.min.css';
@@ -10,12 +10,12 @@ const Border = styled.div`
 	font-family: Helvetica;
 `;
 
-const Render: React.FC<any> = ({ location }) => (
-	<Border
-		dangerouslySetInnerHTML={{
-			__html: new URLSearchParams(location.search).get('html') || '',
-		}}
-	/>
+interface RenderProps {
+	html: string;
+}
+
+const Render: React.FC<RenderProps> = ({ html }) => (
+	<Border dangerouslySetInnerHTML={{ __html: html }} />
 );
 
 export default Render;

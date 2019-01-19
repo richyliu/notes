@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "license": "MIT",
   "scripts": {
-    "develop": "gatsby develop",
+    "develop": "gatsby develop -H 0.0.0.0",
     "start": "npm run develop",
     "build": "gatsby build",
     "serve": "gatsby serve",
@@ -22,9 +22,11 @@
     "react": "^16.8.0-alpha.0",
     "react-codemirror2": "^5.1.0",
     "react-dom": "^16.8.0-alpha.0",
+    "react-responsive": "^6.0.1",
     "showdown": "^1.9.0",
     "showdown-highlight": "^2.1.3",
     "showdown-katex-studdown": "^0.4.0",
+    "spectre.css": "^0.5.8",
     "styled-components": "^4.1.3",
     "typescript": "^3.2.2"
   },

@@ -13,11 +13,11 @@ showdown.extension('mermaid', {
 	regex: '```mermaid([^`]*)```',
 	replace(match, $1) {
 		try {
-			const svg = mermaid.render('mermaid', $1, () => {});
-			return `<div class="mermaid">${svg}</div>`;
+			const svg = mermaid.render('foo', $1, () => {});
+			return `<div>${svg}</div>`;
 		} catch (e) {
 			console.error(e);
-			return `<p class="text-red">[mermaid error: ${e.message}]</p>`;
+			return `<p>[mermaid error: ${e.message}]</p>`;
 		}
 	},
 });
