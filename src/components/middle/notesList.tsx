@@ -1,22 +1,27 @@
 import React from 'react';
 import styled from '../../utils/theme';
 
-const notes = [ 'foo', 'bar', 'baz', 'bam' ];
+const notes = ['foo', 'bar', 'baz', 'bam'];
 
 const NoteStyled = styled.button`
-	margin: 10px 5px;
-	border-radius: 20px !important;
+  margin: 10px 0px;
+  border-radius: 20px !important;
+  border: none !important;
 `;
 
-interface NoteProps {
-	name: string;
+interface NoteButtonProps {
+  name: string;
 }
-const Note: React.FC<NoteProps> = ({ name }) => (
-	<NoteStyled className="btn btn-block">{name}</NoteStyled>
+const NoteButton: React.FC<NoteButtonProps> = ({ name }) => (
+  <NoteStyled className="btn btn-block">{name}</NoteStyled>
 );
 
 const NotesList: React.FC = () => (
-	<div>{notes.map(note => <Note name={note} />)}</div>
+  <div>
+    {notes.map((note, i) => (
+      <NoteButton name={note} key={i} />
+    ))}
+  </div>
 );
 
 export default NotesList;

@@ -1,5 +1,4 @@
 import React from 'react';
-import  'spectre.css'
 import styled from '../../utils/theme';
 
 const FlexContainer = styled.div`
@@ -17,10 +16,10 @@ const ButtonStyled = styled.button`
 `;
 
 const MenuBar: React.FC = () => (
-	<FlexContainer className="form-group">
-		<InputStyled className="form-input" type="text" placeholder="Search..." />
-		<ButtonStyled className="btn">New</ButtonStyled>
-	</FlexContainer>
+  <FlexContainer className="form-group">
+    <InputStyled className="form-input" type="text" placeholder="Search..." />
+    <ButtonStyled className="btn">New</ButtonStyled>
+  </FlexContainer>
 );
 
 export default MenuBar;

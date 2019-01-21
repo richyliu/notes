@@ -1,65 +1,90 @@
 import React, { useState, useEffect } from 'react';
-import { load, save } from '../../database/notes';
 import EditorInput from './editorInput';
 import convertMd from '../../utils/convertMd';
 import Render from '../render';
 import * as Keybinder from '../../utils/keybinder';
 import styled from '../../utils/theme';
 import MenuBar from './menuBar';
-
-const FlexContainer = styled.div`
-	display: flex;
-	flex-direction: column;
-	height: 100vh;
-	overflow-y: scroll;
-`;
+import { ScrollContainer } from '../styled/layout';
+import { NoteInfo } from '../../utils/notes';
+import lsdb from '../../database/localStorageDb';
+import { throttle } from 'throttle-debounce';
 
 interface EditorStyledProps {
-	show: boolean;
+  show: boolean;
 }
 const EditorStyled = styled.div`
-	display: ${(p: EditorStyledProps) => (p.show ? 'block' : 'none')};
-	flex: 0 1 auto;
+  display: ${(p: EditorStyledProps) => (p.show ? 'block' : 'none')};
+  flex: 0 1 auto;
 `;
-const MenuBarStyled = styled.div`flex: 0 0 10px;`;
+const MenuBarStyled = styled.div`
+  flex: 0 0 10px;
+`;
 
-const EditorWrapper: React.FC = () => {
-	const [ html, setHtml ] = useState<string>('');
+interface EditorWrapperProps {
+  note: NoteInfo;
+}
+const EditorWrapper: React.FC<EditorWrapperProps> = ({ note }) => {
+  const [html, setHtml] = useState<string>('');
+  const [val, setVal] = useState<string>('');
 
-	useEffect(
-		() =>
-			Keybinder.bind(action => {
-				switch (action) {
-					case 'toggle-editor-view':
-						if (html !== '') setHtml('');
-						else setHtml(convertMd(load()));
-						break;
-				}
-			}),
-		[ html, setHtml ]
-	);
+  // get current note
+  useEffect(
+    () => {
+      lsdb.getNote(note.id).then(newNote => newNote && setVal(newNote.content));
+    },
+    [note, setVal]
+  );
 
-	// focus on element when coming back
-	useEffect(() => {
-		const ta = document.querySelector(
-			'.CodeMirror textarea'
-		) as HTMLElement;
-		if (ta) ta.focus();
-	});
+  // bind key events
+  useEffect(
+    () =>
+      Keybinder.bind(action => {
+        switch (action) {
+          case 'toggle-editor-view':
+            if (html !== '') setHtml('');
+            else setHtml(val);
+            break;
+        }
+      }),
+    [html, setHtml]
+  );
 
-	return (
-		<FlexContainer>
-			<MenuBarStyled>
-				<MenuBar />
-			</MenuBarStyled>
-			<EditorStyled show={html === ''}>
-				<EditorInput value={load()} onChange={save} />
-			</EditorStyled>
-			<EditorStyled show={html !== ''}>
-				<Render html={html} />
-			</EditorStyled>
-		</FlexContainer>
-	);
+  // focus on element when coming back
+  useEffect(
+    () => {
+      const ta = document.querySelector('.CodeMirror textarea') as HTMLElement;
+      if (ta) ta.focus();
+    },
+    [html]
+  );
+
+  // save to db only when necessary
+  const [last, setLast] = useState<number>(Number(new Date()));
+  const throttle = 3000;
+  useEffect(
+    () => {
+      if (Number(new Date()) - last > throttle) {
+        lsdb.setNote(note.id, { info: note, content: val });
+        setLast(Number(new Date()));
+      }
+    },
+    [last, setLast, val]
+  );
+
+  return (
+    <ScrollContainer>
+      <MenuBarStyled>
+        <MenuBar />
+      </MenuBarStyled>
+      <EditorStyled show={html === ''}>
+        <EditorInput value={val} onChange={setVal} />
+      </EditorStyled>
+      <EditorStyled show={html !== ''}>
+        <Render html={html} />
+      </EditorStyled>
+    </ScrollContainer>
+  );
 };
 
 export default EditorWrapper;

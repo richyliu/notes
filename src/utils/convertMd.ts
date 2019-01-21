@@ -9,22 +9,22 @@ showdown.extension('katex', showdownKatex(config.katex));
 
 mermaid.initialize(config.mermaid);
 showdown.extension('mermaid', {
-	type: 'language',
-	regex: '```mermaid([^`]*)```',
-	replace(match, $1) {
-		try {
-			const svg = mermaid.render('foo', $1, () => {});
-			return `<div>${svg}</div>`;
-		} catch (e) {
-			console.error(e);
-			return `<p>[mermaid error: ${e.message}]</p>`;
-		}
-	},
+  type: 'language',
+  regex: '```mermaid([^`]*)```',
+  replace(_, $1: string) {
+    try {
+      const svg = mermaid.render('foo', $1, () => {});
+      return `<div>${svg}</div>`;
+    } catch (e) {
+      console.error(e);
+      return `<p>[mermaid error: ${e.message}]</p>`;
+    }
+  },
 });
 
 const converter = new showdown.Converter({
-	metadata: true,
-	extensions: [ showdownHighlight, 'katex', 'mermaid' ],
+  metadata: true,
+  extensions: [showdownHighlight, 'katex', 'mermaid'],
 });
 converter.setFlavor('github');
 
@@ -33,5 +33,5 @@ converter.setFlavor('github');
  * @param input Markdown string input to convert
 8 */
 export default function convertMd(input: string): string {
-	return converter.makeHtml(input);
+  return converter.makeHtml(input);
 }

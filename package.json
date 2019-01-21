@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "codemirror": "^5.42.2",
+    "easy-peasy": "^1.7.1",
     "gatsby": "^2.0.76",
     "gatsby-plugin-styled-components": "^3.0.4",
     "gatsby-plugin-typescript": "^2.0.3",
@@ -40,5 +41,8 @@
     "@types/styled-components": "^4.1.5",
     "prettier": "^1.15.3",
     "tslint": "^5.12.1"
+  },
+  "optionalDependencies": {
+    "fsevents": "^1.2.7"
   }
 }
