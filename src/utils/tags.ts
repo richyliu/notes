@@ -16,9 +16,13 @@ export interface TagInfo {
  * @param tag Tag name to get info. Ex: 'foo/bar/baz'
  */
 export function getTagsInfo(tags: Tag[]): TagInfo[] {
-  return tags.sort().map(tag => ({
+  return tags.sort().map(getTagInfo);
+}
+
+export function getTagInfo(tag: Tag): TagInfo {
+  return {
     name: tag.split('/').pop() || '',
     level: (tag.match(/\//g) || []).length,
     tag,
-  }));
+  };
 }

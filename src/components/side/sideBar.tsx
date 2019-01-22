@@ -5,10 +5,11 @@ import { Tag } from '../../utils/tags';
 
 interface SideBarProps {
   tags: Tag[];
+  active: Tag;
 }
-const SideBar: React.FC<SideBarProps> = ({ tags }) => (
+const SideBar: React.FC<SideBarProps> = ({ tags, active }) => (
   <ScrollContainer>
-    <TagsList tags={tags} />
+    <TagsList tags={tags} active={active} />
   </ScrollContainer>
 );
 

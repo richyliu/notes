@@ -65,7 +65,7 @@ const Editor: React.FC = () => {
       {tags && notes && activeTag && activeNote ? (
         <FlexContainer>
           <SideBarStyled>
-            <SideBar tags={tags} />
+            <SideBar tags={tags} active={activeTag} />
           </SideBarStyled>
           <MiddleBarStyled>
             <MiddleBar />

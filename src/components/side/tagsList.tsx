@@ -1,9 +1,10 @@
 import React from 'react';
 import styled from '../../utils/theme';
-import { TagInfo, getTagsInfo, Tag } from '../../utils/tags';
+import { TagInfo, getTagsInfo, Tag, getTagInfo } from '../../utils/tags';
 
 interface TagStyledProps {
   level: number;
+  active: boolean;
 }
 const TagStyled = styled.button`
   border-radius: 20px !important;
@@ -12,6 +13,7 @@ const TagStyled = styled.button`
   margin-bottom: 10px;
   padding-left: ${(p: TagStyledProps) => p.level * 30 + 10}px !important;
   text-align: start !important;
+  color: ${(p: TagStyledProps) => (p.active ? 'green' : 'blue')} !important;
 `;
 
 // const tags: TagInfo[] = getTagsInfo([
@@ -32,10 +34,11 @@ const TagStyled = styled.button`
 
 interface TagButtonProps {
   tag: TagInfo;
+  active: boolean;
 }
-const TagButton: React.FC<TagButtonProps> = ({ tag }) => (
+const TagButton: React.FC<TagButtonProps> = ({ tag, active }) => (
   <div>
-    <TagStyled level={tag.level} className="btn btn-block">
+    <TagStyled level={tag.level} active={active} className="btn btn-block">
       {tag.name}
     </TagStyled>
   </div>
@@ -43,11 +46,12 @@ const TagButton: React.FC<TagButtonProps> = ({ tag }) => (
 
 interface TagsListProps {
   tags: Tag[];
+  active: Tag;
 }
-const TagsList: React.FC<TagsListProps> = ({ tags }) => (
+const TagsList: React.FC<TagsListProps> = ({ tags, active }) => (
   <div>
-    {getTagsInfo(tags).map((tag, i) => (
-      <TagButton tag={tag} key={i} />
+    {tags.map((tag, i) => (
+      <TagButton tag={getTagInfo(tag)} key={i} active={active === tag} />
     ))}
   </div>
 );
