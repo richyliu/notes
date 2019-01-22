@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { ThemeProvider } from 'styled-components';
 import styled, { theme } from '../utils/theme';
@@ -8,7 +8,6 @@ import MiddleBar from '../components/middle/middleBar';
 import SideBar from '../components/side/sideBar';
 
 import { Tag } from '../utils/tags';
-import config from '../utils/config';
 import { NoteInfo } from '../utils/notes';
 import lsdb from '../database/localStorageDb';
 
@@ -27,25 +26,57 @@ const EditorStyled = styled.div`
   flex: 1 4 auto;
 `;
 
-// lsdb.setup();
+lsdb.setup();
 
 const Editor: React.FC = () => {
-  const [activeTag, setActiveTag] = useState<Tag>(config.tags.default);
-  const [activeNote, setActiveNote] = useState<NoteInfo>(config.lsdb.defaultNote);
+  const [tags, setTags] = useState<Tag[]>(null as any);
+  const [activeTag, setActiveTag] = useState<Tag>(null as any);
+  const [notes, setNotes] = useState<NoteInfo[]>(null as any);
+  const [activeNote, setActiveNote] = useState<NoteInfo>(null as any);
+
+  useEffect(
+    () => {
+      lsdb.getTags().then(tags => setTags(tags));
+    },
+    [setTags]
+  );
+  useEffect(
+    () => {
+      if (tags) setActiveTag(tags[0]);
+    },
+    [setActiveNote, tags]
+  );
+  useEffect(
+    () => {
+      lsdb.getNotes([activeTag]).then(notes => setNotes(notes));
+    },
+    [activeTag, setNotes]
+  );
+  useEffect(
+    () => {
+      if (notes) setActiveNote(notes[0]);
+    },
+    [setActiveNote, notes]
+  );
+  console.log({ tags, notes, activeTag, activeNote });
 
   return (
     <ThemeProvider theme={theme}>
-      <FlexContainer>
-        <SideBarStyled>
-          <SideBar />
-        </SideBarStyled>
-        <MiddleBarStyled>
-          <MiddleBar />
-        </MiddleBarStyled>
-        <EditorStyled>
-          <EditorWrapper note={activeNote} />
-        </EditorStyled>
-      </FlexContainer>
+      {tags && notes && activeTag && activeNote ? (
+        <FlexContainer>
+          <SideBarStyled>
+            <SideBar tags={tags} />
+          </SideBarStyled>
+          <MiddleBarStyled>
+            <MiddleBar />
+          </MiddleBarStyled>
+          <EditorStyled>
+            <EditorWrapper note={activeNote} />
+          </EditorStyled>
+        </FlexContainer>
+      ) : (
+        <h1>Loading...</h1>
+      )}
     </ThemeProvider>
   );
 };

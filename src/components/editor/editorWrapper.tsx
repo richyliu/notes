@@ -8,7 +8,6 @@ import MenuBar from './menuBar';
 import { ScrollContainer } from '../styled/layout';
 import { NoteInfo } from '../../utils/notes';
 import lsdb from '../../database/localStorageDb';
-import { throttle } from 'throttle-debounce';
 
 interface EditorStyledProps {
   show: boolean;

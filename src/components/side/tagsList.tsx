@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from '../../utils/theme';
-import { TagInfo, getTagsInfo } from '../../utils/tags';
+import { TagInfo, getTagsInfo, Tag } from '../../utils/tags';
 
 interface TagStyledProps {
   level: number;
@@ -14,21 +14,21 @@ const TagStyled = styled.button`
   text-align: start !important;
 `;
 
-const tags: TagInfo[] = getTagsInfo([
-  'All',
-  'Notebooks',
-  'Notebooks/one',
-  'Notebooks/two',
-  'Tags',
-  'Tags/business',
-  'Tags/art',
-  'Tags/business/node',
-  'Tags/language',
-  'Tags/language/art',
-  'Tags/language/foo',
-  'Extra',
-  'Trash',
-]);
+// const tags: TagInfo[] = getTagsInfo([
+//   'All',
+//   'Notebooks',
+//   'Notebooks/one',
+//   'Notebooks/two',
+//   'Tags',
+//   'Tags/business',
+//   'Tags/art',
+//   'Tags/business/node',
+//   'Tags/language',
+//   'Tags/language/art',
+//   'Tags/language/foo',
+//   'Extra',
+//   'Trash',
+// ]);
 
 interface TagButtonProps {
   tag: TagInfo;
@@ -41,9 +41,12 @@ const TagButton: React.FC<TagButtonProps> = ({ tag }) => (
   </div>
 );
 
-const TagsList: React.FC = () => (
+interface TagsListProps {
+  tags: Tag[];
+}
+const TagsList: React.FC<TagsListProps> = ({ tags }) => (
   <div>
-    {tags.map((tag, i) => (
+    {getTagsInfo(tags).map((tag, i) => (
       <TagButton tag={tag} key={i} />
     ))}
   </div>

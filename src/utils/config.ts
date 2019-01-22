@@ -91,7 +91,6 @@ export default {
   shortcuts,
   lsdb: {
     tagsKey: '___notes_tags',
-    tagSeparator: '|',
     defaultTags: [
       'All',
       'Notebooks',
@@ -107,12 +106,25 @@ export default {
       'Extra',
       'Trash',
     ],
-    defaultNote: {
-      title: 'Helow rodl',
-      id: '230r9strenf',
-    },
-    notesListKey: '___notes_list',
-    defaultKey: '___notes_default',
-    defaultText: '# Hello\nheo world\n\n1. foo\n2. bar\n3. baz',
+    defaultNotes: [
+      {
+        info: {
+          title: 'Helow rodl',
+          favorite: false,
+          tags: ['All', 'test'],
+          pinned: false,
+        },
+        content: '# Hello\nheo world\n\n1. foo\n2. bar\n3. baz',
+      },
+      {
+        info: {
+          tags: ['All'],
+          title: 'Stronger together',
+          pinned: false,
+          favorite: false,
+        },
+        content: '# Stronger together\nfoo bar',
+      },
+    ],
   },
 };

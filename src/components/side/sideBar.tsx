@@ -1,10 +1,14 @@
 import React from 'react';
 import TagsList from './tagsList';
 import { ScrollContainer } from '../styled/layout';
+import { Tag } from '../../utils/tags';
 
-const SideBar: React.FC = () => (
+interface SideBarProps {
+  tags: Tag[];
+}
+const SideBar: React.FC<SideBarProps> = ({ tags }) => (
   <ScrollContainer>
-    <TagsList />
+    <TagsList tags={tags} />
   </ScrollContainer>
 );
 

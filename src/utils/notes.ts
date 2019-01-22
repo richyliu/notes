@@ -21,9 +21,9 @@ export interface NoteInfo {
    * Used by the server to identify a note
    */
   id: string;
-  tags?: Tag[];
-  favorite?: boolean;
-  pinned?: boolean;
+  tags: Tag[];
+  favorite: boolean;
+  pinned: boolean;
   dateCreated?: any;
   dateModified?: any;
 }
