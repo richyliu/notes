@@ -19,6 +19,7 @@
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": false,
     "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   }
 }

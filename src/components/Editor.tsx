@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { ThemeProvider } from 'styled-components';
-import styled, { theme } from '../utils/theme';
+import styled from '../utils/theme';
 
 import EditorWrapper from '../components/editor/editorWrapper';
 import MiddleBar from '../components/middle/middleBar';
@@ -61,23 +60,21 @@ const Editor: React.FC = () => {
   console.log({ tags, notes, activeTag, activeNote });
 
   return (
-    <ThemeProvider theme={theme}>
-      {tags && notes && activeTag && activeNote ? (
-        <FlexContainer>
-          <SideBarStyled>
-            <SideBar tags={tags} active={activeTag} />
-          </SideBarStyled>
-          <MiddleBarStyled>
-            <MiddleBar />
-          </MiddleBarStyled>
-          <EditorStyled>
-            <EditorWrapper note={activeNote} />
-          </EditorStyled>
-        </FlexContainer>
-      ) : (
-        <h1>Loading...</h1>
-      )}
-    </ThemeProvider>
+    tags && notes && activeTag && activeNote ? (
+      <FlexContainer>
+        <SideBarStyled>
+          <SideBar tags={tags} active={activeTag} />
+        </SideBarStyled>
+        <MiddleBarStyled>
+          <MiddleBar />
+        </MiddleBarStyled>
+        <EditorStyled>
+          <EditorWrapper note={activeNote} />
+        </EditorStyled>
+      </FlexContainer>
+    ) : (
+      <h1>Loading...</h1>
+    )
   );
 };
 
