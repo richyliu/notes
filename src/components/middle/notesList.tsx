@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import styled from '../../utils/theme';
-
-const notes = ['foo', 'bar', 'baz', 'bam'];
+import { NoteInfo } from '../../utils/notes';
+import NotesViewState from '../../utils/notesViewState';
 
 const NoteStyled = styled.button`
   margin: 10px 0px;
@@ -10,18 +10,26 @@ const NoteStyled = styled.button`
 `;
 
 interface NoteButtonProps {
-  name: string;
+  note: NoteInfo;
 }
-const NoteButton: React.FC<NoteButtonProps> = ({ name }) => (
-  <NoteStyled className="btn btn-block">{name}</NoteStyled>
-);
+const NoteButton: React.FC<NoteButtonProps> = ({ note }) => {
+  const [state, dispatch] = useContext(NotesViewState.Context);
+  return (
+    <NoteStyled
+      onClick={() => dispatch({ action: 'activeNote', payload: note })}
+      className="btn btn-block"
+    >
+      {note.title}
+    </NoteStyled>
+  );
+};
 
-const NotesList: React.FC = () => (
-  <div>
-    {notes.map((note, i) => (
-      <NoteButton name={note} key={i} />
-    ))}
-  </div>
+interface NotesListProps {
+  notes: NoteInfo[];
+  activeNote: NoteInfo;
+}
+const NotesList: React.FC<NotesListProps> = ({ notes, activeNote }) => (
+  <div>{notes.map(note => <NoteButton note={note} key={note.id} />)}</div>
 );
 
 export default NotesList;

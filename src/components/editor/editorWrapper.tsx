@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import EditorInput from './editorInput';
-import convertMd from '../../utils/convertMd';
-import Render from '../render';
-import * as Keybinder from '../../utils/keybinder';
+
 import styled from '../../utils/theme';
-import MenuBar from './menuBar';
 import { ScrollContainer } from '../styled/layout';
+
+import EditorInput from './editorInput';
+import Render from '../render';
+import MenuBar from './menuBar';
+
+import * as Keybinder from '../../utils/keybinder';
 import { NoteInfo } from '../../utils/notes';
 import lsdb from '../../database/localStorageDb';
 
@@ -16,9 +18,7 @@ const EditorStyled = styled.div`
   display: ${(p: EditorStyledProps) => (p.show ? 'block' : 'none')};
   flex: 0 1 auto;
 `;
-const MenuBarStyled = styled.div`
-  flex: 0 0 10px;
-`;
+const MenuBarStyled = styled.div`flex: 0 0 10px;`;
 
 interface EditorWrapperProps {
   note: NoteInfo;
@@ -58,18 +58,15 @@ const EditorWrapper: React.FC<EditorWrapperProps> = ({ note }) => {
     [html]
   );
 
-  // save to db only when necessary
-  const [last, setLast] = useState<number>(Number(new Date()));
-  const throttle = 3000;
-  useEffect(
-    () => {
-      if (Number(new Date()) - last > throttle) {
-        lsdb.setNote(note.id, { info: note, content: val });
-        setLast(Number(new Date()));
-      }
-    },
-    [last, setLast, val]
-  );
+  // save to db only when necessary (after no changes for 2 seconds)
+  const throttle = 2000;
+  useEffect(() => {
+    const timer = setTimeout(
+      () => lsdb.setNote(note.id, { info: note, content: val }),
+      throttle
+    );
+    return () => clearTimeout(timer);
+  });
 
   return (
     <ScrollContainer>

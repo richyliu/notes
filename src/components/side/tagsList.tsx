@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import styled from '../../utils/theme';
 import { TagInfo, getTagsInfo, Tag, getTagInfo } from '../../utils/tags';
+import NotesViewState from '../../utils/notesViewState';
 
 interface TagStyledProps {
   level: number;
@@ -33,16 +34,26 @@ const TagStyled = styled.button`
 // ]);
 
 interface TagButtonProps {
-  tag: TagInfo;
+  tag: Tag;
   active: boolean;
 }
-const TagButton: React.FC<TagButtonProps> = ({ tag, active }) => (
-  <div>
-    <TagStyled level={tag.level} active={active} className="btn btn-block">
-      {tag.name}
-    </TagStyled>
-  </div>
-);
+const TagButton: React.FC<TagButtonProps> = React.memo(({ tag, active }) => {
+  const [state, dispatch] = useContext(NotesViewState.Context);
+  const tagInfo = getTagInfo(tag);
+
+  return (
+    <div>
+      <TagStyled
+        level={tagInfo.level}
+        active={active}
+        onClick={() => dispatch({ action: 'activeTag', payload: tag })}
+        className="btn btn-block"
+      >
+        {tagInfo.name}
+      </TagStyled>
+    </div>
+  );
+});
 
 interface TagsListProps {
   tags: Tag[];
@@ -51,7 +62,7 @@ interface TagsListProps {
 const TagsList: React.FC<TagsListProps> = ({ tags, active }) => (
   <div>
     {tags.map((tag, i) => (
-      <TagButton tag={getTagInfo(tag)} key={i} active={active === tag} />
+      <TagButton tag={tag} key={i} active={active === tag} />
     ))}
   </div>
 );

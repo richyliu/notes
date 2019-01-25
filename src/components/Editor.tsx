@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 
 import styled from '../utils/theme';
 
@@ -11,70 +11,48 @@ import { NoteInfo } from '../utils/notes';
 import lsdb from '../database/localStorageDb';
 
 import 'spectre.css';
+import NotesViewState from '../utils/notesViewState';
 
-const FlexContainer = styled.div`
-  display: flex;
-`;
-const SideBarStyled = styled.div`
-  flex: 0 1 300px;
-`;
-const MiddleBarStyled = styled.div`
-  flex: 0 1 300px;
-`;
-const EditorStyled = styled.div`
-  flex: 1 4 auto;
-`;
+const FlexContainer = styled.div`display: flex;`;
+const SideBarStyled = styled.div`flex: 0 1 300px;`;
+const MiddleBarStyled = styled.div`flex: 0 1 300px;`;
+const EditorStyled = styled.div`flex: 1 4 auto;`;
 
-lsdb.setup();
+// lsdb.setup();
 
 const Editor: React.FC = () => {
-  const [tags, setTags] = useState<Tag[]>(null as any);
-  const [activeTag, setActiveTag] = useState<Tag>(null as any);
-  const [notes, setNotes] = useState<NoteInfo[]>(null as any);
-  const [activeNote, setActiveNote] = useState<NoteInfo>(null as any);
+  const [state, dispatch] = useContext(NotesViewState.Context);
 
   useEffect(
     () => {
-      lsdb.getTags().then(tags => setTags(tags));
+      lsdb.getTags().then(tags => dispatch({ action: 'tags', payload: tags }));
     },
-    [setTags]
+    [dispatch]
   );
   useEffect(
     () => {
-      if (tags) setActiveTag(tags[0]);
+      if (state.activeTag)
+        lsdb
+          .getNotes([state.activeTag])
+          .then(notes => dispatch({ action: 'notes', payload: notes }));
     },
-    [setActiveNote, tags]
+    [state.activeTag]
   );
-  useEffect(
-    () => {
-      lsdb.getNotes([activeTag]).then(notes => setNotes(notes));
-    },
-    [activeTag, setNotes]
-  );
-  useEffect(
-    () => {
-      if (notes) setActiveNote(notes[0]);
-    },
-    [setActiveNote, notes]
-  );
-  console.log({ tags, notes, activeTag, activeNote });
 
-  return (
-    tags && notes && activeTag && activeNote ? (
-      <FlexContainer>
-        <SideBarStyled>
-          <SideBar tags={tags} active={activeTag} />
-        </SideBarStyled>
-        <MiddleBarStyled>
-          <MiddleBar />
-        </MiddleBarStyled>
-        <EditorStyled>
-          <EditorWrapper note={activeNote} />
-        </EditorStyled>
-      </FlexContainer>
-    ) : (
-      <h1>Loading...</h1>
-    )
+  return state.tags && state.notes && state.activeTag && state.activeNote ? (
+    <FlexContainer>
+      <SideBarStyled>
+        <SideBar tags={state.tags} active={state.activeTag} />
+      </SideBarStyled>
+      <MiddleBarStyled>
+        <MiddleBar notes={state.notes} activeNote={state.activeNote} />
+      </MiddleBarStyled>
+      <EditorStyled>
+        <EditorWrapper note={state.activeNote} />
+      </EditorStyled>
+    </FlexContainer>
+  ) : (
+    <h1>Loading...</h1>
   );
 };
 

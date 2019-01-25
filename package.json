@@ -28,6 +28,7 @@
   },
   "dependencies": {
     "codemirror": "^5.42.2",
+    "constate": "^1.0.0-alpha.7",
     "highlight.js": "^9.13.1",
     "katex": "^0.10.0",
     "mermaid": "^8.0.0",
