@@ -1,2 +1,7 @@
 .vscode/
 dist/
+.idea/
+elm-stuff/
+node_modules/
+dist/
+.cache/
