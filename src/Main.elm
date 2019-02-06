@@ -27,6 +27,7 @@ main =
 type alias Model =
     { editorContent : String
     , keys : List Key
+    , displayMarkdown : Bool
     }
 
 
@@ -57,9 +58,17 @@ foo
 """
 
 
+shortcuts : List ( Key, Msg )
+shortcuts =
+    [ ( Key "a" 65 False False, ToggleDisplayMarkdown ) ]
+
+
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { editorContent = initialContent, keys = [] }
+    ( { editorContent = initialContent
+      , keys = []
+      , displayMarkdown = False
+      }
     , send { type_ = "set_content", data = initialContent }
     )
 
@@ -82,6 +91,7 @@ type Msg
     | RandomChange
     | KeyDown Key
     | ClearKeys
+    | ToggleDisplayMarkdown
     | NoOp
 
 
@@ -104,11 +114,29 @@ update msg model =
             )
 
         KeyDown key ->
-            -- ( { model | keys = key :: model.keys }, Cmd.none )
-            ( model, Cmd.none )
+            let
+                msgs =
+                    shortcuts
+                        |> List.filter (\( k, _ ) -> k == key)
+                        |> List.map (\( _, curMsg ) -> curMsg)
+
+                applyMsgs curMsg ( curModel, curCmds ) =
+                    let
+                        ( nextModel, nextCmd ) =
+                            update curMsg curModel
+                    in
+                    ( nextModel, nextCmd :: curCmds )
+
+                ( resultModel, resultCmds ) =
+                    List.foldl applyMsgs ( model, [] ) msgs
+            in
+            ( { resultModel | keys = key :: resultModel.keys }, Cmd.batch resultCmds )
 
         ClearKeys ->
             ( { model | keys = [] }, Cmd.none )
+
+        ToggleDisplayMarkdown ->
+            ( { model | displayMarkdown = not model.displayMarkdown }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -119,33 +147,37 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { editorContent, keys } =
+view { editorContent, keys, displayMarkdown } =
     div []
         [ div
             [ id "editor-wrapper"
             , style "height" "300px"
+            , style "display" <| ite displayMarkdown "none" "block"
             , onKeyDown KeyDown
             ]
             []
-        , viewMarkdown editorContent
+        , viewMarkdown editorContent displayMarkdown
         , div []
             [ button [ onClick RandomChange ] [ text "random number" ]
+            , button [ onClick ToggleDisplayMarkdown ] [ text "toggle display" ]
             , button [ onClick ClearKeys ] [ text "clear keys" ]
             ]
         , viewKeys keys
         ]
 
 
-viewMarkdown : String -> Html Msg
-viewMarkdown md =
-    Markdown.toHtmlWith
-        { defaultOptions
-            | githubFlavored = Just { tables = True, breaks = True }
-            , defaultHighlighting = Just "javascript"
-            , sanitize = False
-        }
-        [ class "content" ]
-        md
+viewMarkdown : String -> Bool -> Html Msg
+viewMarkdown md shouldDisplay =
+    div [ style "display" <| ite shouldDisplay "block" "none" ]
+        [ Markdown.toHtmlWith
+            { defaultOptions
+                | githubFlavored = Just { tables = True, breaks = True }
+                , defaultHighlighting = Just "javascript"
+                , sanitize = False
+            }
+            [ class "content" ]
+            md
+        ]
 
 
 viewKeys : List Key -> Html Msg

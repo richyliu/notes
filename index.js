@@ -12,13 +12,28 @@ const app = Elm.Main.init({
 window.app = app;
 
 
+CodeMirror.commands['my-md'] = () => console.log('arst');
 let editor = CodeMirror(document.getElementById('editor-wrapper'), {
   value: '# foo\nbar',
   mode: 'markdown',
   theme: 'monokai',
   indentUnit: 4,
   indentWithTabs: true,
-  lineWrapping: true
+  lineWrapping: true,
+  extraKeys: {
+    'Cmd-Backspace': 'delWordBefore',
+    'Alt-Z': 'undo',
+    'Shift-Alt-Z': 'redo',
+    'Alt-F': 'find',
+    'Shift-Alt-W': cm =>
+      cm.setOption('lineWrapping', !cm.getOption('lineWrapping')),
+    'Alt-L': cm => {
+      // TODO: make this work on mobile
+      const line = Number(prompt('Line number', ''));
+      if (!isNaN(line)) cm.getDoc().setCursor(line - 1, 0);
+    },
+    'µ': 'my-md'
+  },
 });
 editor.on('change', cm => app.ports.editorChanged.send(cm.getValue()));
 
