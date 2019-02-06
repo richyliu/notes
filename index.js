@@ -12,23 +12,21 @@ const app = Elm.Main.init({
 window.app = app;
 
 
-setTimeout(() => {
-    let editor = CodeMirror(document.getElementById('editor-wrapper'), {
-        value: '# foo\nbar',
-        mode: 'markdown',
-        theme: 'monokai',
-        indentUnit: 4,
-        indentWithTabs: true,
-        lineWrapping: true
-    });
-    editor.on('change', cm => app.ports.editorChanged.send(cm.getValue()));
+let editor = CodeMirror(document.getElementById('editor-wrapper'), {
+  value: '# foo\nbar',
+  mode: 'markdown',
+  theme: 'monokai',
+  indentUnit: 4,
+  indentWithTabs: true,
+  lineWrapping: true
+});
+editor.on('change', cm => app.ports.editorChanged.send(cm.getValue()));
 
-    app.ports.send.subscribe(({type_: type, data}) => {
-        switch(type) {
-            case 'set_content':
-                editor.doc.setValue(data);
-        }
-    });
+app.ports.send.subscribe(({type_: type, data}) => {
+  switch(type) {
+    case 'set_content':
+      editor.doc.setValue(data);
+  }
+});
 
-    window.editor = editor;
-}, 200);
+window.editor = editor;
