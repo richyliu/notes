@@ -1,15 +1,40 @@
-port module Ports exposing (SendMsg, editorChanged, send)
+port module Ports exposing (PortMsg, fromElm, toElm)
+
+import Json.Decode as Decode exposing (Decoder, string)
+import Json.Decode.Pipeline exposing (optional, required)
 
 
-type alias SendMsg =
+type alias PortMsg =
     { type_ : String
     , data : String
     }
 
 
-port send : SendMsg -> Cmd msg
+port fromElm : PortMsg -> Cmd msg
 
 
-{-| Called when editor content changes
--}
-port editorChanged : (String -> msg) -> Sub msg
+port toElmPort : (Decode.Value -> msg) -> Sub msg
+
+
+toElm : (PortMsg -> msg) -> Sub msg
+toElm tagger =
+    toElmPort (decodeMsg >> tagger)
+
+
+decodeMsg : Decode.Value -> PortMsg
+decodeMsg val =
+    let
+        result =
+            Decode.decodeValue
+                (Decode.succeed PortMsg
+                    |> required "type_" string
+                    |> optional "data" string ""
+                )
+                val
+    in
+    case result of
+        Ok value ->
+            value
+
+        Err value ->
+            { type_ = "error", data = "" }
