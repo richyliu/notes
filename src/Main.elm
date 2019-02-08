@@ -24,18 +24,18 @@ main =
 
 type alias Model =
     { editorContent : String
-    , keys : List Key
     , displayMarkdown : Bool
+    , messages : List String
     }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { editorContent = ""
-      , keys = []
       , displayMarkdown = False
+      , messages = []
       }
-    , Cmd.none
+    , fromElm { type_ = OutHasStorage, data = "" }
     )
 
 
@@ -43,38 +43,46 @@ init _ =
 -- UPDATE
 
 
-type alias Key =
-    { key : String
-    , code : Int
-    , alt : Bool
-    , ctrl : Bool
-    }
-
-
 type Msg
     = Change String
     | UpdateEditor String
-    | ClearKeys
     | ToggleDisplayMarkdown
+    | RequestStorage
+    | SetStorage String
+    | AddMessage String
     | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        -- updates outside storage as well as internal data
         Change content ->
-            ( { model | editorContent = content }, Cmd.none )
+            ( { model | editorContent = content }, fromElm { type_ = OutSetStorage, data = content } )
 
+        -- updates external editor
         UpdateEditor content ->
             ( { model | editorContent = content }
-            , fromElm { type_ = "set_content", data = content }
+            , fromElm { type_ = OutSetContent, data = content }
             )
-
-        ClearKeys ->
-            ( { model | keys = [] }, Cmd.none )
 
         ToggleDisplayMarkdown ->
             ( { model | displayMarkdown = not model.displayMarkdown }, Cmd.none )
+
+        RequestStorage ->
+            ( model, fromElm { type_ = OutRequestStorage, data = "" } )
+
+        -- equivalent to Change and UpdateEditor
+        SetStorage str ->
+            ( { model | editorContent = str }
+            , Cmd.batch
+                [ fromElm { type_ = OutSetStorage, data = str }
+                , fromElm { type_ = OutSetContent, data = str }
+                ]
+            )
+
+        AddMessage str ->
+            ( { model | messages = str :: model.messages }, Cmd.none )
 
         NoOp ->
             ( model, Cmd.none )
@@ -85,7 +93,7 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { editorContent, keys, displayMarkdown } =
+view { editorContent, displayMarkdown, messages } =
     div []
         [ div
             [ id "editor-wrapper"
@@ -96,9 +104,8 @@ view { editorContent, keys, displayMarkdown } =
         , viewMarkdown editorContent displayMarkdown
         , div []
             [ button [ onClick ToggleDisplayMarkdown ] [ text "toggle display" ]
-            , button [ onClick ClearKeys ] [ text "clear keys" ]
             ]
-        , viewKeys keys
+        , div [] <| List.map (\m -> p [] [ text m ]) messages
         ]
 
 
@@ -116,23 +123,6 @@ viewMarkdown md shouldDisplay =
         ]
 
 
-viewKeys : List Key -> Html Msg
-viewKeys keys =
-    div []
-        (List.map
-            (\key ->
-                p [] <|
-                    List.map (\t -> text <| t ++ " ")
-                        [ key.key
-                        , String.fromInt key.code
-                        , ite key.alt "alt" ""
-                        , ite key.ctrl "ctrl" ""
-                        ]
-            )
-            keys
-        )
-
-
 
 -- SUBSCRIPTIONS
 
@@ -142,17 +132,50 @@ subscriptions _ =
     toElm handleIncoming
 
 
-handleIncoming : PortMsg -> Msg
+handleIncoming : InMsg -> Msg
 handleIncoming { type_, data } =
-    case Debug.log "[elm] incoming msg" type_ of
-        "error" ->
-            NoOp
+    case {- Debug.log "[elm] incoming msg" -} type_ of
+        InError ->
+            AddMessage data
 
-        "set_content" ->
+        InSetContent ->
             Change data
 
-        "toggle_markdown" ->
+        InToggleMarkdown ->
             ToggleDisplayMarkdown
 
-        _ ->
-            NoOp
+        InHasStorage ->
+            if String.length data == 0 then
+                SetStorage defaultText
+
+            else
+                RequestStorage
+
+        InReceiveStorage ->
+            UpdateEditor data
+
+
+defaultText : String
+defaultText =
+    """
+## sub heading
+
+```javascript
+function foo() {}
+```
+
+foo bar baz
+
+foo
+
+1. hello
+1. hello
+\t2. hello
+\t3. foo
+1. hello
+
+> This is a blockquote
+
+- [x] foo
+* [x] bar
+"""
