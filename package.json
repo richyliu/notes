@@ -2,10 +2,10 @@
   "name": "elm",
   "version": "0.0.1",
   "description": "",
-  "main": "main.js",
+  "main": "src/index.js",
   "scripts": {
-    "start": "parcel index.html --port 8000",
-    "build": "parcel build index.html",
+    "start": "parcel src/index.html --port 8000",
+    "build": "parcel build src/index.html",
     "local-server": "http-server ./dist -o -p 8000"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "license": "MIT",
   "dependencies": {
     "codemirror": "^5.43.0",
+    "dexie": "^2.0.4",
     "highlight.js": "^9.14.2",
     "parcel": "^1.11.0"
   },
