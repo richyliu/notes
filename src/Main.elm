@@ -5,7 +5,9 @@ import Helpers exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Http
 import Markdown exposing (defaultOptions)
+import Parse exposing (..)
 import Ports exposing (..)
 
 
@@ -50,6 +52,8 @@ type Msg
     | RequestStorage
     | SetStorage String
     | AddMessage String
+    | ServerUpload
+    | ServerDownload
     | NoOp
 
 
@@ -84,6 +88,44 @@ update msg model =
         AddMessage str ->
             ( { model | messages = str :: model.messages }, Cmd.none )
 
+        ServerUpload ->
+            ( model
+            , updateNote "ImwmPGfDkl"
+                model.editorContent
+                (\result ->
+                    case result of
+                        Ok _ ->
+                            AddMessage "Successfully uploaded"
+
+                        Err err ->
+                            case err of
+                                Http.Timeout ->
+                                    AddMessage "Timeout"
+
+                                Http.NetworkError ->
+                                    AddMessage "Network error"
+
+                                Http.BadStatus status ->
+                                    AddMessage <| "Bad status: " ++ String.fromInt status
+
+                                _ ->
+                                    AddMessage "Other error: bad body or bad url"
+                )
+            )
+
+        ServerDownload ->
+            ( model
+            , getNote "ImwmPGfDkl"
+                (\result ->
+                    case result of
+                        Ok note ->
+                            UpdateEditor note
+
+                        Err _ ->
+                            NoOp
+                )
+            )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -104,6 +146,8 @@ view { editorContent, displayMarkdown, messages } =
         , viewMarkdown editorContent displayMarkdown
         , div []
             [ button [ onClick ToggleDisplayMarkdown ] [ text "toggle display" ]
+            , button [ onClick ServerDownload ] [ text "server download" ]
+            , button [ onClick ServerUpload ] [ text "server upload" ]
             ]
         , div [] <| List.map (\m -> p [] [ text m ]) messages
         ]
