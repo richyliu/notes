@@ -11,9 +11,6 @@ import Json.Encode as Encode
 
 type OutMsgType
     = OutSetContent
-    | OutHasStorage
-    | OutRequestStorage
-    | OutSetStorage
 
 
 type alias OutMsg =
@@ -44,15 +41,6 @@ encodeOutMsgType outMsg =
         OutSetContent ->
             Encode.string "SetContent"
 
-        OutHasStorage ->
-            Encode.string "HasStorage"
-
-        OutRequestStorage ->
-            Encode.string "RequestStorage"
-
-        OutSetStorage ->
-            Encode.string "SetStorage"
-
 
 
 -- Messages coming in to elm from javascript
@@ -60,9 +48,7 @@ encodeOutMsgType outMsg =
 
 type InMsgType
     = InSetContent
-    | InHasStorage
     | InToggleMarkdown
-    | InReceiveStorage
     | InError
 
 
@@ -127,12 +113,6 @@ decodeInMsgType =
 
                 "ToggleMarkdown" ->
                     Decode.succeed InToggleMarkdown
-
-                "HasStorage" ->
-                    Decode.succeed InHasStorage
-
-                "ReceiveStorage" ->
-                    Decode.succeed InReceiveStorage
 
                 unknown ->
                     Decode.fail <| "Incorrect in option: " ++ unknown

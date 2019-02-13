@@ -1,4 +1,4 @@
-module Parse exposing (getNote, updateNote)
+port module Parse exposing (getNote, updateNote)
 
 import Http exposing (..)
 import Json.Decode as Decode exposing (Decoder, Value, field, string)

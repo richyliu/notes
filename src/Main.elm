@@ -1,13 +1,13 @@
 module Main exposing (main)
 
 import Browser
+import Database as Db
 import Helpers exposing (..)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Markdown exposing (defaultOptions)
-import Parse exposing (..)
 import Ports exposing (..)
 
 
@@ -37,7 +37,7 @@ init _ =
       , displayMarkdown = False
       , messages = []
       }
-    , fromElm { type_ = OutHasStorage, data = "" }
+    , Db.send "GetNote" [ "ImwmPGfDkl" ]
     )
 
 
@@ -49,8 +49,6 @@ type Msg
     = Change String
     | UpdateEditor String
     | ToggleDisplayMarkdown
-    | RequestStorage
-    | SetStorage String
     | AddMessage String
     | ServerUpload
     | ServerDownload
@@ -62,7 +60,7 @@ update msg model =
     case msg of
         -- updates outside storage as well as internal data
         Change content ->
-            ( { model | editorContent = content }, fromElm { type_ = OutSetStorage, data = content } )
+            ( { model | editorContent = content }, Cmd.none )
 
         -- updates external editor
         UpdateEditor content ->
@@ -73,58 +71,14 @@ update msg model =
         ToggleDisplayMarkdown ->
             ( { model | displayMarkdown = not model.displayMarkdown }, Cmd.none )
 
-        RequestStorage ->
-            ( model, fromElm { type_ = OutRequestStorage, data = "" } )
-
-        -- equivalent to Change and UpdateEditor
-        SetStorage str ->
-            ( { model | editorContent = str }
-            , Cmd.batch
-                [ fromElm { type_ = OutSetStorage, data = str }
-                , fromElm { type_ = OutSetContent, data = str }
-                ]
-            )
-
         AddMessage str ->
             ( { model | messages = str :: model.messages }, Cmd.none )
 
         ServerUpload ->
-            ( model
-            , updateNote "ImwmPGfDkl"
-                model.editorContent
-                (\result ->
-                    case result of
-                        Ok _ ->
-                            AddMessage "Successfully uploaded"
-
-                        Err err ->
-                            case err of
-                                Http.Timeout ->
-                                    AddMessage "Timeout"
-
-                                Http.NetworkError ->
-                                    AddMessage "Network error"
-
-                                Http.BadStatus status ->
-                                    AddMessage <| "Bad status: " ++ String.fromInt status
-
-                                _ ->
-                                    AddMessage "Other error: bad body or bad url"
-                )
-            )
+            ( model, Db.send "UpdateNote" [ "ImwmPGfDkl", model.editorContent ] )
 
         ServerDownload ->
-            ( model
-            , getNote "ImwmPGfDkl"
-                (\result ->
-                    case result of
-                        Ok note ->
-                            UpdateEditor note
-
-                        Err _ ->
-                            NoOp
-                )
-            )
+            ( model, Db.send "GetNote" [ "ImwmPGfDkl" ] )
 
         NoOp ->
             ( model, Cmd.none )
@@ -149,7 +103,7 @@ view { editorContent, displayMarkdown, messages } =
             , button [ onClick ServerDownload ] [ text "server download" ]
             , button [ onClick ServerUpload ] [ text "server upload" ]
             ]
-        , div [] <| List.map (\m -> p [] [ text m ]) messages
+        , pre [] <| List.map (\m -> code [] [ text <| m ++ "\n" ]) messages
         ]
 
 
@@ -173,7 +127,14 @@ viewMarkdown md shouldDisplay =
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    toElm handleIncoming
+    Sub.batch
+        [ toElm handleIncoming
+        , Db.received handleDb
+        ]
+
+
+
+-- Handle incoming port subscriptions
 
 
 handleIncoming : InMsg -> Msg
@@ -188,15 +149,34 @@ handleIncoming { type_, data } =
         InToggleMarkdown ->
             ToggleDisplayMarkdown
 
-        InHasStorage ->
-            if String.length data == 0 then
-                SetStorage defaultText
 
-            else
-                RequestStorage
 
-        InReceiveStorage ->
-            UpdateEditor data
+-- Handle responses from the database
+
+
+handleDb : Db.Msg -> Msg
+handleDb { type_, data } =
+    case data of
+        [ note ] ->
+            case type_ of
+                "GetNote" ->
+                    UpdateEditor note
+
+                "UpdateNote" ->
+                    AddMessage note
+
+                "JsonParseError" ->
+                    AddMessage <| "Javascript sent an unknown message of type_: " ++ type_ ++ " and data: " ++ String.join ", " data
+
+                unknown ->
+                    AddMessage <| "Unknown database message received: " ++ unknown
+
+        [ _, error ] ->
+            AddMessage error
+
+        -- Does not match any of the above
+        unknownList ->
+            AddMessage <| "Unknown data received by handleDb: [ \"" ++ String.join "\", \"" unknownList ++ "\" ]"
 
 
 defaultText : String
