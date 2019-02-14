@@ -1,3 +1,7 @@
+/**
+ * Sets up highlight.js for use with marked (used in Elm code). A global hljs
+ * instance is required.
+ */
 import hljs from 'highlight.js/lib/highlight';
 
 import apache from 'highlight.js/lib/languages/apache';
@@ -49,7 +53,6 @@ hljs.registerLanguage('python', python);
 hljs.registerLanguage('ruby', ruby);
 hljs.registerLanguage('sql', sql);
 hljs.registerLanguage('shell', shell);
-
 
 // REQUIRED for syntax highlighting with Marked
 window.hljs = hljs;

@@ -35,7 +35,7 @@ const codemirrorShortcuts = {
 
 export default function setup(
   sendIn: (content: {type_: string; data: string}) => void,
-  subscribe: (cb: (content: {type_: string; data: string}) => void) => void,
+  setContent: (cb: (content: string) => void) => void,
   editorWrapper: HTMLDivElement,
 ) {
   const send = (type_: string, data = '') => sendIn({type_, data: data});
@@ -91,16 +91,8 @@ export default function setup(
 
   editor.on('change', cm => send('SetContent', cm.getValue()));
 
-  window['__editor'] = editor;
-
   /**
    * Listen to elm requests
    */
-  subscribe(({type_: type, data}) => {
-    switch (type) {
-      case 'SetContent':
-        editor.doc.setValue(data);
-        break;
-    }
-  });
+  setContent(content => editor.doc.setValue(content));
 }

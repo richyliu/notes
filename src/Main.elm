@@ -1,14 +1,15 @@
 module Main exposing (main)
 
+-- import Helpers exposing (..)
+
 import Browser
 import Database as Db
-import Helpers exposing (..)
+import EditorPorts
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Markdown exposing (defaultOptions)
-import Ports exposing (..)
 
 
 main =
@@ -65,7 +66,7 @@ update msg model =
         -- updates external editor
         UpdateEditor content ->
             ( { model | editorContent = content }
-            , fromElm { type_ = OutSetContent, data = content }
+            , EditorPorts.setContent content
             )
 
         ToggleDisplayMarkdown ->
@@ -94,7 +95,7 @@ view { editorContent, displayMarkdown, messages } =
         [ div
             [ id "editor-wrapper"
             , style "height" "300px"
-            , style "display" <| ite displayMarkdown "none" "block"
+            , style "display" <| boolToBlockOrNone <| not displayMarkdown
             ]
             []
         , viewMarkdown editorContent displayMarkdown
@@ -109,7 +110,7 @@ view { editorContent, displayMarkdown, messages } =
 
 viewMarkdown : String -> Bool -> Html Msg
 viewMarkdown md shouldDisplay =
-    div [ style "display" <| ite shouldDisplay "block" "none" ]
+    div [ style "display" <| boolToBlockOrNone shouldDisplay ]
         [ Markdown.toHtmlWith
             { defaultOptions
                 | githubFlavored = Just { tables = True, breaks = True }
@@ -121,6 +122,15 @@ viewMarkdown md shouldDisplay =
         ]
 
 
+boolToBlockOrNone : Bool -> String
+boolToBlockOrNone bool =
+    if bool then
+        "block"
+
+    else
+        "none"
+
+
 
 -- SUBSCRIPTIONS
 
@@ -128,7 +138,7 @@ viewMarkdown md shouldDisplay =
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     Sub.batch
-        [ toElm handleIncoming
+        [ EditorPorts.toElm handleEditor
         , Db.received handleDb
         ]
 
@@ -137,16 +147,16 @@ subscriptions _ =
 -- Handle incoming port subscriptions
 
 
-handleIncoming : InMsg -> Msg
-handleIncoming { type_, data } =
-    case {- Debug.log "[elm] incoming msg" -} type_ of
-        InError ->
+handleEditor : EditorPorts.ReceivedMsg -> Msg
+handleEditor { type_, data } =
+    case type_ of
+        EditorPorts.Error ->
             AddMessage data
 
-        InSetContent ->
+        EditorPorts.SetContent ->
             Change data
 
-        InToggleMarkdown ->
+        EditorPorts.ToggleMarkdown ->
             ToggleDisplayMarkdown
 
 
@@ -166,7 +176,7 @@ handleDb { type_, data } =
                     AddMessage note
 
                 "JsonParseError" ->
-                    AddMessage <| "Javascript sent an unknown message of type_: " ++ type_ ++ " and data: " ++ String.join ", " data
+                    AddMessage <| "Database received could not be parsed correctly by Elm with error: " ++ String.join ", " data
 
                 unknown ->
                     AddMessage <| "Unknown database message received: " ++ unknown
