@@ -7,7 +7,14 @@ import Json.Encode as Encode
 
 type alias Msg =
     -- Type_ represents the request type. The response is of the same type
+    -- See js/database.ts for the types
     { type_ : String
+
+    -- Addition type regarding data. Examples:
+    --      ""          Data is payload response
+    --      "error"     An error has occured. Data is the error message
+    --      "message"   Success message should be sent to elm to be displayed. Data is that message.
+    , datatype : String
 
     -- Data is a list of either:
     --      Arguments to javascript function
@@ -23,11 +30,12 @@ type alias Msg =
 port dbOut : Encode.Value -> Cmd msg
 
 
-send : String -> List String -> Cmd msg
-send type_ data =
+send : String -> String -> List String -> Cmd msg
+send type_ datatype data =
     dbOut <|
         Encode.object <|
             [ ( "type_", Encode.string type_ )
+            , ( "datatype", Encode.string datatype )
             , ( "data", Encode.list Encode.string data )
             ]
 
@@ -51,6 +59,7 @@ decodeOutMsg val =
             Decode.decodeValue
                 (Decode.succeed Msg
                     |> required "type_" Decode.string
+                    |> optional "datatype" Decode.string ""
                     |> required "data" (Decode.list Decode.string)
                 )
                 val
@@ -78,4 +87,7 @@ decodeOutMsg val =
                         Decode.Failure reason _ ->
                             "Failure: " ++ reason
             in
-            { type_ = "JsonParseError", data = [ errMsg ] }
+            { type_ = "JsonParseError"
+            , datatype = ""
+            , data = [ errMsg ]
+            }

@@ -34,11 +34,11 @@ const codemirrorShortcuts = {
 };
 
 export default function setup(
-  sendIn: (content: {type_: string; data: string}) => void,
+  sendIn: (content: { type_: string; data: string }) => void,
   setContent: (cb: (content: string) => void) => void,
-  editorWrapper: HTMLDivElement,
+  editorWrapper: HTMLDivElement
 ) {
-  const send = (type_: string, data = '') => sendIn({type_, data: data});
+  const send = (type_: string, data = '') => sendIn({ type_, data: data });
   let editor;
 
   /**
@@ -79,14 +79,14 @@ export default function setup(
     cm.setOption('lineWrapping', !cm.getOption('lineWrapping'));
 
   editor = CodeMirror(editorWrapper, {
-    value: '# foo\nbar',
+    value: '',
     mode: 'markdown',
     theme: 'monokai',
     indentUnit: 4,
     indentWithTabs: true,
     lineWrapping: true,
     lineNumbers: true,
-    extraKeys: {...keyboardShortcuts, ...codemirrorShortcuts},
+    extraKeys: { ...keyboardShortcuts, ...codemirrorShortcuts },
   });
 
   editor.on('change', cm => send('SetContent', cm.getValue()));

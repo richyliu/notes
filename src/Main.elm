@@ -25,10 +25,20 @@ main =
 -- MODEL
 
 
+type alias Note =
+    { id_ : String
+    , content : String
+    , tags : List String
+    }
+
+
 type alias Model =
     { editorContent : String
     , displayMarkdown : Bool
     , messages : List String
+    , currentNote : Maybe Note
+    , currentTag : Maybe String
+    , searchStr : Maybe String
     }
 
 
@@ -37,8 +47,11 @@ init _ =
     ( { editorContent = ""
       , displayMarkdown = False
       , messages = []
+      , currentNote = Nothing
+      , currentTag = Nothing
+      , searchStr = Nothing
       }
-    , Db.send "GetNote" [ "ImwmPGfDkl" ]
+    , Db.send "GetNote" "" [ "ImwmPGfDkl" ]
     )
 
 
@@ -59,11 +72,11 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        -- updates outside storage as well as internal data
+        -- updates internals state only
         Change content ->
             ( { model | editorContent = content }, Cmd.none )
 
-        -- updates external editor
+        -- updates external editor and internal state
         UpdateEditor content ->
             ( { model | editorContent = content }
             , EditorPorts.setContent content
@@ -76,10 +89,10 @@ update msg model =
             ( { model | messages = str :: model.messages }, Cmd.none )
 
         ServerUpload ->
-            ( model, Db.send "UpdateNote" [ "ImwmPGfDkl", model.editorContent ] )
+            ( model, Db.send "UpdateNote" "" [ "ImwmPGfDkl", model.editorContent ] )
 
         ServerDownload ->
-            ( model, Db.send "GetNote" [ "ImwmPGfDkl" ] )
+            ( model, Db.send "GetNote" "" [ "ImwmPGfDkl" ] )
 
         NoOp ->
             ( model, Cmd.none )
@@ -165,15 +178,25 @@ handleEditor { type_, data } =
 
 
 handleDb : Db.Msg -> Msg
-handleDb { type_, data } =
-    case data of
-        [ note ] ->
+handleDb { type_, datatype, data } =
+    case datatype of
+        "" ->
             case type_ of
                 "GetNote" ->
-                    UpdateEditor note
+                    case List.head data of
+                        Just note ->
+                            UpdateEditor note
+
+                        Nothing ->
+                            NoOp
 
                 "UpdateNote" ->
-                    AddMessage note
+                    case List.head data of
+                        Just note ->
+                            AddMessage note
+
+                        Nothing ->
+                            NoOp
 
                 "JsonParseError" ->
                     AddMessage <| "Database received could not be parsed correctly by Elm with error: " ++ String.join ", " data
@@ -181,12 +204,20 @@ handleDb { type_, data } =
                 unknown ->
                     AddMessage <| "Unknown database message received: " ++ unknown
 
-        [ _, error ] ->
-            AddMessage error
+        "error" ->
+            AddMessage <| "JS gave an error message: " ++ String.join ", " data
+
+        "message" ->
+            AddMessage <| "JS gave a message: " ++ String.join ", " data
 
         -- Does not match any of the above
-        unknownList ->
-            AddMessage <| "Unknown data received by handleDb: [ \"" ++ String.join "\", \"" unknownList ++ "\" ]"
+        unknownDataType ->
+            AddMessage <|
+                "Unknown data of type: \""
+                    ++ unknownDataType
+                    ++ "\" received by handleDb: [ \""
+                    ++ String.join "\", \"" data
+                    ++ "\" ]"
 
 
 defaultText : String
