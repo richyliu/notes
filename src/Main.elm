@@ -1,7 +1,6 @@
 module Main exposing (main)
 
--- import Helpers exposing (..)
-
+import Array
 import Browser
 import Database as Db
 import EditorPorts
@@ -25,10 +24,14 @@ main =
 -- MODEL
 
 
+type alias Tag =
+    String
+
+
 type alias Note =
-    { id_ : String
+    { id : String
     , content : String
-    , tags : List String
+    , tags : List Tag
     }
 
 
@@ -37,7 +40,9 @@ type alias Model =
     , displayMarkdown : Bool
     , messages : List String
     , currentNote : Maybe Note
-    , currentTag : Maybe String
+    , currentTag : Maybe Tag
+    , notes : List Note
+    , tags : List Tag
     , searchStr : Maybe String
     }
 
@@ -49,9 +54,11 @@ init _ =
       , messages = []
       , currentNote = Nothing
       , currentTag = Nothing
+      , notes = []
+      , tags = []
       , searchStr = Nothing
       }
-    , Db.send "GetNote" "" [ "ImwmPGfDkl" ]
+    , Db.send "GetAllTags" "" []
     )
 
 
@@ -66,6 +73,11 @@ type Msg
     | AddMessage String
     | ServerUpload
     | ServerDownload
+    | SetAllTags (List Tag)
+    | GetNotesByTags (List Tag)
+    | SetNotes (List Note)
+    | SetCurrentNote Note
+    | SetCurrentTag Tag
     | NoOp
 
 
@@ -94,6 +106,34 @@ update msg model =
         ServerDownload ->
             ( model, Db.send "GetNote" "" [ "ImwmPGfDkl" ] )
 
+        SetAllTags tags ->
+            ( { model
+                | tags = tags
+                , currentTag = List.head tags
+              }
+            , Cmd.none
+            )
+
+        GetNotesByTags tags ->
+            ( model, Db.send "GetNotesByTags" "" tags )
+
+        SetNotes notes ->
+            ( { model | notes = notes }, Cmd.none )
+
+        SetCurrentNote note ->
+            let
+                ( updated, command ) =
+                    update (UpdateEditor note.content) model
+            in
+            ( { updated | currentNote = Just note }, command )
+
+        SetCurrentTag tag ->
+            let
+                ( updated, command ) =
+                    update (GetNotesByTags [ tag ]) model
+            in
+            ( { updated | currentTag = Just tag }, command )
+
         NoOp ->
             ( model, Cmd.none )
 
@@ -103,21 +143,32 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { editorContent, displayMarkdown, messages } =
+view model =
     div []
         [ div
             [ id "editor-wrapper"
             , style "height" "300px"
-            , style "display" <| boolToBlockOrNone <| not displayMarkdown
+            , style "display" <| boolToBlockOrNone <| not model.displayMarkdown
             ]
             []
-        , viewMarkdown editorContent displayMarkdown
+        , viewMarkdown model.editorContent model.displayMarkdown
         , div []
             [ button [ onClick ToggleDisplayMarkdown ] [ text "toggle display" ]
             , button [ onClick ServerDownload ] [ text "server download" ]
             , button [ onClick ServerUpload ] [ text "server upload" ]
             ]
-        , pre [] <| List.map (\m -> code [] [ text <| m ++ "\n" ]) messages
+        , div [] <|
+            List.map
+                (\tag ->
+                    button
+                        [ onClick <| SetCurrentTag tag ]
+                        [ text tag ]
+                )
+                model.tags
+        , div []
+            [ text <| "You currently have: " ++ String.fromInt (List.length model.notes) ++ " notes"
+            ]
+        , pre [] <| List.map (\m -> code [] [ text <| m ++ "\n" ]) model.messages
         ]
 
 
@@ -184,8 +235,17 @@ handleDb { type_, datatype, data } =
             case type_ of
                 "GetNote" ->
                     case List.head data of
-                        Just note ->
-                            UpdateEditor note
+                        Just noteStr ->
+                            let
+                                note =
+                                    getNoteFromContent noteStr
+                            in
+                            case note of
+                                Just actualNote ->
+                                    SetCurrentNote actualNote
+
+                                Nothing ->
+                                    NoOp
 
                         Nothing ->
                             NoOp
@@ -197,6 +257,12 @@ handleDb { type_, datatype, data } =
 
                         Nothing ->
                             NoOp
+
+                "GetAllTags" ->
+                    SetAllTags data
+
+                "GetNotesByTags" ->
+                    SetNotes <| List.filterMap getNoteFromContent data
 
                 "JsonParseError" ->
                     AddMessage <| "Database received could not be parsed correctly by Elm with error: " ++ String.join ", " data
@@ -244,3 +310,84 @@ foo
 - [x] foo
 * [x] bar
 """
+
+
+
+{- Extracts full note, including id and tags from a note string
+
+   Example note:
+
+   ---
+   id: the_id
+   tags: separated,by,commas
+   ---
+   # The content
+   now begins the actual content.
+   Notice there is no spacing after the `---`
+-}
+
+
+getNoteFromContent : String -> Maybe Note
+getNoteFromContent str =
+    let
+        lines : Array.Array String
+        lines =
+            str
+                |> String.split "\n"
+                |> Array.fromList
+
+        id : Maybe String
+        id =
+            lines
+                |> Array.get 1
+                |> Maybe.withDefault ""
+                |> String.split ": "
+                |> List.tail
+                |> Maybe.withDefault []
+                |> List.head
+
+        tags : List String
+        tags =
+            lines
+                |> Array.get 2
+                |> Maybe.withDefault ""
+                |> String.split ": "
+                |> List.tail
+                |> Maybe.withDefault []
+                |> List.head
+                |> Maybe.withDefault ""
+                |> String.split ","
+
+        content : String
+        content =
+            lines
+                |> Array.slice 4 (Array.length lines)
+                |> Array.toList
+                |> String.join "\n"
+
+        line0 : String
+        line0 =
+            lines
+                |> Array.get 0
+                |> Maybe.withDefault ""
+
+        line3 : String
+        line3 =
+            lines
+                |> Array.get 3
+                |> Maybe.withDefault ""
+    in
+    if line0 == "---" && line3 == "---" then
+        case id of
+            Just theId ->
+                Just
+                    { content = content
+                    , id = theId
+                    , tags = tags
+                    }
+
+            Nothing ->
+                Nothing
+
+    else
+        Nothing

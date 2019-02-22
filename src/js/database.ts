@@ -4,6 +4,7 @@ export interface Tag {
 }
 export interface Note {
   content: string;
+  id: Id;
 }
 export interface Error {
   msg: string;
@@ -52,12 +53,18 @@ export default function setup(
       case 'GetNote':
         db.getNote(data0).then(note => {
           if (isError(note)) send('GetNote', 'error', [note.msg]);
-          else send('GetNote', '', [note.content]);
+          else {
+            // TODO send id/tag info along?
+            db.getTags(data0).then(tags => {
+              if (isError(tags)) send('GetNote', '', [tags.msg]);
+              else send('GetNote', '', [formatFullNote(note, tags)]);
+            });
+          }
         });
         break;
 
       case 'UpdateNote':
-        db.setNote(data0, { content: data[1] }).then(err => {
+        db.setNote(data0, { content: data[1], id: data0 }).then(err => {
           if (err) send('UpdateNote', 'error', [err.msg]);
           else send('UpdateNote', 'message', ['Successfully updated note!']);
         });
@@ -69,34 +76,68 @@ export default function setup(
             send('IsNote', 'error', ['Unable to check if id is a note']);
           else send('IsNote', '', [itIs ? 'yes' : '']);
         });
+        break;
 
       case 'AddNote':
         db.addNote(data0).then(id => {
           if (isError(id)) send('AddNote', 'error', [id.msg]);
           else send('AddNote', '', [id]);
         });
+        break;
 
       case 'GetTags':
         db.getTags(data0).then(tags => {
           if (isError(tags)) send('GetTags', 'error', [tags.msg]);
-          else send('GetTags', '', [tags.map(t => t.tag)]);
+          else send('GetTags', '', tags.map(t => t.tag));
         });
+        break;
 
       case 'GetAllTags':
         db.getAllTags().then(tags => {
           if (isError(tags)) send('GetAllTags', 'error', [tags.msg]);
-          else send('GetAllTags', '', [tags.map(t => t.tag)]);
+          else send('GetAllTags', '', tags.map(t => t.tag));
         });
+        break;
 
       case 'GetNotesByTags':
-        db.getNotesByTags(data.map(t => ({ tag: t }))).then(note => {
-          if (isError(note)) send('GetNotesByTags', 'error', [note.msg]);
-          else send('GetNotesByTags', '', [note]);
+        db.getNotesByTags(data.map(t => ({ tag: t }))).then(notes => {
+          if (isError(notes)) send('GetNotesByTags', 'error', [notes.msg]);
+          else {
+            Promise.all(notes.map(note => db.getTags(note.id))).then(
+              notesTags => {
+                for (let error of notesTags) {
+                  if (isError(error)) {
+                    send('GetNotesByTags', 'error', [error.msg]);
+                    return;
+                  }
+                }
+                send(
+                  'GetNotesByTags',
+                  '',
+                  notes.map((note, i) =>
+                    formatFullNote(note, notesTags[i] as Tag[])
+                  )
+                );
+              }
+            );
+          }
         });
+        break;
 
       default:
-        console.log('[js]: unknown type_: ' + type_);
+        console.warn(`[js]: unknown type_: ${type_} with data:`, data);
         break;
     }
   });
+}
+
+/**
+ * Embeds id and tag info into a note's header
+ */
+function formatFullNote(note: Note, tags: Tag[]): string {
+  return `---
+id: ${note.id}
+tags: ${tags.map(t => t.tag).join(',')}
+---
+${note.content}`;
 }
