@@ -5,6 +5,7 @@ export interface Tag {
 export interface Note {
   content: string;
   id: Id;
+  title: string;
 }
 export interface Error {
   msg: string;
@@ -64,7 +65,7 @@ export default function setup(
         break;
 
       case 'UpdateNote':
-        db.setNote(data0, { content: data[1], id: data0 }).then(err => {
+        db.setNote(data0, { content: data[2], id: data0, title: data[1] }).then(err => {
           if (err) send('UpdateNote', 'error', [err.msg]);
           else send('UpdateNote', 'message', ['Successfully updated note!']);
         });
@@ -138,6 +139,7 @@ function formatFullNote(note: Note, tags: Tag[]): string {
   return `---
 id: ${note.id}
 tags: ${tags.map(t => t.tag).join(',')}
+title: ${note.title}
 ---
 ${note.content}`;
 }

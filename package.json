@@ -4,8 +4,9 @@
   "description": "Web app with offline capabilities for writing notes and syncing",
   "main": "src/index.js",
   "scripts": {
-    "start": "parcel src/index.html --port 8000",
-    "build": "rm -r ./dist/ parcel build src/index.html",
+    "start": "parcel ./src/index.html --port 8000",
+    "build": "rm -r ./dist/; parcel build --no-minify ./src/index.html",
+    "prod": "rm -r ./dist/; parcel build --no-source-maps ./src/index.html",
     "local-server": "http-server ./dist/ -o -p 8000"
   },
   "keywords": [],

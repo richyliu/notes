@@ -7,15 +7,27 @@ interface InternalNote {
 
 let notes: { [key: string]: InternalNote } = {
   xyus23ei: {
-    note: { content: 'bar baz\n\nhello world', id: 'xyus23ei' },
+    note: {
+      content: 'bar baz\n\nhello world',
+      id: 'xyus23ei',
+      title: 'Bar baz',
+    },
     tags: [{ tag: '@All' }, { tag: 'foo' }, { tag: 'bar' }, { tag: 'baz' }],
   },
   ImwmPGfDkl: {
-    note: { content: '# foo\nbar baz more text', id: 'ImwmPGfDkl' },
+    note: {
+      content: '# foo\nbar baz more text lmao what a troll',
+      id: 'ImwmPGfDkl',
+      title: 'The foo',
+    },
     tags: [{ tag: '@All' }, { tag: 'foo' }],
   },
   yrstr: {
-    note: { content: '# foo\nbar baz more text', id: 'yrstr' },
+    note: {
+      content: '# foo\nbar baz more text',
+      id: 'yrstr',
+      title: 'Foo bar',
+    },
     tags: [{ tag: '@All' }],
   },
 };

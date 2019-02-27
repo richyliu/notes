@@ -4,11 +4,16 @@ import Array
 import Browser
 import Database as Db
 import EditorPorts
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (..)
+import Element exposing (..)
+import Element.Background as Background
+import Element.Border as Border
+import Element.Font as Font
+import Element.Input exposing (button)
+import Html exposing (Html)
+import Html.Attributes as Attr
 import Http
 import Markdown exposing (defaultOptions)
+import Set
 
 
 main =
@@ -32,12 +37,49 @@ type alias Note =
     { id : String
     , content : String
     , tags : List Tag
+    , title : String
     }
 
 
+emptyNote : Note
+emptyNote =
+    Note "" "" [] ""
+
+
+globalNotes : List Note
+globalNotes =
+    [ { id = "1"
+      , content = "# Note 1\nContent of note 1"
+      , title = "Note 1"
+      , tags = [ "Food", "Baz" ]
+      }
+    , { id = "2"
+      , content = "This is a very pointless note"
+      , title = "Note 2???"
+      , tags = [ "Food/Yuck" ]
+      }
+    , { id = "3"
+      , content = "# Note 3\n## Subtitle"
+      , title = "Note 3.5"
+      , tags = []
+      }
+    , { id = "4"
+      , content = "Note number 4"
+      , title = "Note 1"
+      , tags = [ "Food", "Food/Yuck", "Bar/Bar" ]
+      }
+    ]
+
+
+getTags : List Note -> List String
+getTags notes =
+    List.foldr (\n list -> n.tags ++ list) [] notes
+        |> Set.fromList
+        |> Set.toList
+
+
 type alias Model =
-    { editorContent : String
-    , displayMarkdown : Bool
+    { displayMarkdown : Bool
     , messages : List String
     , currentNote : Maybe Note
     , currentTag : Maybe Tag
@@ -49,8 +91,7 @@ type alias Model =
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( { editorContent = ""
-      , displayMarkdown = False
+    ( { displayMarkdown = False
       , messages = []
       , currentNote = Nothing
       , currentTag = Nothing
@@ -58,7 +99,10 @@ init _ =
       , tags = []
       , searchStr = Nothing
       }
-    , Db.send "GetAllTags" "" []
+    , Cmd.batch
+        [ Db.send "GetAllTags" "" []
+        , Db.send "GetNote" "" [ "ImwmPGfDkl" ]
+        ]
     )
 
 
@@ -68,31 +112,33 @@ init _ =
 
 type Msg
     = Change String
-    | UpdateEditor String
     | ToggleDisplayMarkdown
     | AddMessage String
-    | ServerUpload
-    | ServerDownload
+    | SetNote Note
+    | GetNote String
     | SetAllTags (List Tag)
     | GetNotesByTags (List Tag)
     | SetNotes (List Note)
     | SetCurrentNote Note
     | SetCurrentTag Tag
+    | Bunch (List Msg)
     | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        -- updates internals state only
         Change content ->
-            ( { model | editorContent = content }, Cmd.none )
+            let
+                newCurrentNote =
+                    case model.currentNote of
+                        Just note ->
+                            Just { note | content = content }
 
-        -- updates external editor and internal state
-        UpdateEditor content ->
-            ( { model | editorContent = content }
-            , EditorPorts.setContent content
-            )
+                        Nothing ->
+                            Nothing
+            in
+            ( { model | currentNote = newCurrentNote }, Cmd.none )
 
         ToggleDisplayMarkdown ->
             ( { model | displayMarkdown = not model.displayMarkdown }, Cmd.none )
@@ -100,11 +146,11 @@ update msg model =
         AddMessage str ->
             ( { model | messages = str :: model.messages }, Cmd.none )
 
-        ServerUpload ->
-            ( model, Db.send "UpdateNote" "" [ "ImwmPGfDkl", model.editorContent ] )
+        SetNote note ->
+            ( model, Db.send "UpdateNote" "" [ note.id, note.title, note.content ] )
 
-        ServerDownload ->
-            ( model, Db.send "GetNote" "" [ "ImwmPGfDkl" ] )
+        GetNote id ->
+            ( model, Db.send "GetNote" "" [ id ] )
 
         SetAllTags tags ->
             ( { model
@@ -123,9 +169,9 @@ update msg model =
         SetCurrentNote note ->
             let
                 ( updated, command ) =
-                    update (UpdateEditor note.content) model
+                    update (Change note.content) model
             in
-            ( { updated | currentNote = Just note }, command )
+            ( { updated | currentNote = Just note }, EditorPorts.setContent note.content )
 
         SetCurrentTag tag ->
             let
@@ -133,6 +179,18 @@ update msg model =
                     update (GetNotesByTags [ tag ]) model
             in
             ( { updated | currentTag = Just tag }, command )
+
+        Bunch msgs ->
+            List.foldr
+                (\curMsg ( curModel, prevCommand ) ->
+                    let
+                        ( updatedModel, newCommand ) =
+                            update curMsg curModel
+                    in
+                    ( updatedModel, Cmd.batch [ prevCommand, newCommand ] )
+                )
+                ( model, Cmd.none )
+                msgs
 
         NoOp ->
             ( model, Cmd.none )
@@ -144,44 +202,19 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ div
-            [ id "editor-wrapper"
-            , style "height" "300px"
-            , style "display" <| boolToBlockOrNone <| not model.displayMarkdown
-            ]
-            []
-        , viewMarkdown model.editorContent model.displayMarkdown
-        , div []
-            [ button [ onClick ToggleDisplayMarkdown ] [ text "toggle display" ]
-            , button [ onClick ServerDownload ] [ text "server download" ]
-            , button [ onClick ServerUpload ] [ text "server upload" ]
-            ]
-        , div [] <|
-            List.map
-                (\tag ->
-                    button
-                        [ onClick <| SetCurrentTag tag ]
-                        [ text tag ]
-                )
-                model.tags
-        , div []
-            [ text <| "You currently have: " ++ String.fromInt (List.length model.notes) ++ " notes"
-            ]
-        , pre [] <| List.map (\m -> code [] [ text <| m ++ "\n" ]) model.messages
-        ]
+    Element.layout [] <| appHome model
 
 
 viewMarkdown : String -> Bool -> Html Msg
 viewMarkdown md shouldDisplay =
-    div [ style "display" <| boolToBlockOrNone shouldDisplay ]
+    Html.div [ Attr.style "display" <| boolToBlockOrNone shouldDisplay ]
         [ Markdown.toHtmlWith
             { defaultOptions
                 | githubFlavored = Just { tables = True, breaks = True }
                 , defaultHighlighting = Just "javascript"
                 , sanitize = False
             }
-            [ class "markdown-body" ]
+            [ Attr.class "markdown-body" ]
             md
         ]
 
@@ -193,6 +226,114 @@ boolToBlockOrNone bool =
 
     else
         "none"
+
+
+appHome : Model -> Element Msg
+appHome model =
+    row
+        [ width fill
+        , centerY
+        , spacing 10
+        , height fill
+        , padding 10
+        , Font.size 18
+        ]
+        [ tagsPanel model
+        , notesListPanel model
+        , editorPanel model
+        ]
+
+
+panel : Int -> Element msg -> Element msg
+panel size contents =
+    el
+        [ Background.color (rgb255 255 196 217)
+        , Font.color (rgb255 0 0 0)
+        , Border.rounded 5
+        , Border.width 3
+        , Border.color (rgb255 0 0 0)
+        , padding 30
+        , width <| fillPortion size
+        , height fill
+        ]
+        contents
+
+
+tagsPanel : Model -> Element Msg
+tagsPanel model =
+    panel 1 <|
+        column [ spacing 10 ] <|
+            heading1 "Tags"
+                :: List.map (\t -> simpleButton (SetCurrentTag t) t) model.tags
+
+
+notesListPanel : Model -> Element Msg
+notesListPanel model =
+    panel 1 <|
+        column [ spacing 10 ] <|
+            heading1 "Notes"
+                :: List.map (\n -> simpleButton (SetCurrentNote n) n.title) model.notes
+
+
+editorPanel : Model -> Element Msg
+editorPanel model =
+    panel 2 <|
+        column
+            []
+            [ html <|
+                Html.div [ Attr.style "width" "100%" ]
+                    [ Html.div
+                        [ Attr.id "editor-wrapper"
+                        , Attr.style "height" "300px"
+                        , Attr.style "margin-bottom" "10px"
+                        , Attr.style "display" <| boolToBlockOrNone <| not model.displayMarkdown
+                        ]
+                        []
+                    , viewMarkdown
+                        (.content <| Maybe.withDefault emptyNote model.currentNote)
+                        model.displayMarkdown
+                    ]
+            , row [ spacing 5 ]
+                [ simpleButton ToggleDisplayMarkdown "toggle display"
+                , simpleButton (doWithCurrentNote model SetNote) "save current note"
+                , simpleButton (doWithCurrentNote model (\n -> GetNote n.id)) "get current note"
+                ]
+            ]
+
+
+{-| Send a msg with current note if it isn't nothing
+-}
+doWithCurrentNote : Model -> (Note -> Msg) -> Msg
+doWithCurrentNote model msg =
+    case model.currentNote of
+        Just note ->
+            msg note
+
+        Nothing ->
+            NoOp
+
+
+simpleButton : Msg -> String -> Element Msg
+simpleButton msg title =
+    button
+        [ Border.color <| rgb 0 0 0
+        , Border.width 2
+        , Border.rounded 5
+        , paddingXY 10 5
+        , width fill
+        ]
+        { onPress = Just msg, label = text title }
+
+
+heading1 : String -> Element msg
+heading1 title =
+    el
+        [ Font.size 38
+        , paddingXY 0 20
+        , Font.family [ Font.serif ]
+        ]
+    <|
+        text title
 
 
 
@@ -320,6 +461,7 @@ foo
    ---
    id: the_id
    tags: separated,by,commas
+   title: The title
    ---
    # The content
    now begins the actual content.
@@ -358,10 +500,20 @@ getNoteFromContent str =
                 |> Maybe.withDefault ""
                 |> String.split ","
 
+        title : Maybe String
+        title =
+            lines
+                |> Array.get 3
+                |> Maybe.withDefault ""
+                |> String.split ": "
+                |> List.tail
+                |> Maybe.withDefault []
+                |> List.head
+
         content : String
         content =
             lines
-                |> Array.slice 4 (Array.length lines)
+                |> Array.slice 5 (Array.length lines)
                 |> Array.toList
                 |> String.join "\n"
 
@@ -371,22 +523,23 @@ getNoteFromContent str =
                 |> Array.get 0
                 |> Maybe.withDefault ""
 
-        line3 : String
-        line3 =
+        line4 : String
+        line4 =
             lines
-                |> Array.get 3
+                |> Array.get 4
                 |> Maybe.withDefault ""
     in
-    if line0 == "---" && line3 == "---" then
-        case id of
-            Just theId ->
+    if line0 == "---" && line4 == "---" then
+        case ( id, title ) of
+            ( Just theId, Just theTitle ) ->
                 Just
                     { content = content
                     , id = theId
                     , tags = tags
+                    , title = theTitle
                     }
 
-            Nothing ->
+            _ ->
                 Nothing
 
     else
