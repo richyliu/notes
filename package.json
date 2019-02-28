@@ -4,7 +4,7 @@
   "description": "Web app with offline capabilities for writing notes and syncing",
   "main": "src/index.js",
   "scripts": {
-    "start": "parcel ./src/index.html --port 8000",
+    "start": "parcel watch ./src/index.html --no-hmr & live-server --port=8000 ./dist/",
     "build": "rm -r ./dist/; parcel build --no-minify ./src/index.html",
     "prod": "rm -r ./dist/; parcel build --no-source-maps ./src/index.html",
     "local-server": "http-server ./dist/ -o -p 8000"
@@ -15,6 +15,7 @@
   "dependencies": {
     "codemirror": "^5.43.0",
     "highlight.js": "^9.14.2",
+    "live-server": "^1.2.1",
     "parcel": "^1.11.0",
     "pouchdb": "^7.0.0",
     "typescript": "^3.3.3"

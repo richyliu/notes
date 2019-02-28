@@ -100,9 +100,7 @@ init _ =
       , searchStr = Nothing
       }
     , Cmd.batch
-        [ Db.send "GetAllTags" "" []
-        , Db.send "GetNote" "" [ "ImwmPGfDkl" ]
-        ]
+        [ Db.send "GetAllTags" "" [] ]
     )
 
 
@@ -155,7 +153,9 @@ update msg model =
         SetAllTags tags ->
             ( { model
                 | tags = tags
-                , currentTag = List.head tags
+
+                -- TODO get notes based on the new current tag using Bunch
+                , currentTag = Debug.log "tags" (List.head tags)
               }
             , Cmd.none
             )
@@ -262,7 +262,7 @@ panel size contents =
 tagsPanel : Model -> Element Msg
 tagsPanel model =
     panel 1 <|
-        column [ spacing 10 ] <|
+        column [ spacing 10, width fill ] <|
             heading1 "Tags"
                 :: List.map (\t -> simpleButton (SetCurrentTag t) t) model.tags
 
@@ -270,17 +270,23 @@ tagsPanel model =
 notesListPanel : Model -> Element Msg
 notesListPanel model =
     panel 1 <|
-        column [ spacing 10 ] <|
+        column [ spacing 10, width fill ] <|
             heading1 "Notes"
                 :: List.map (\n -> simpleButton (SetCurrentNote n) n.title) model.notes
 
 
 editorPanel : Model -> Element Msg
 editorPanel model =
+    let
+        withNoteMsg =
+            doWithCurrentNote model NoOp
+    in
     panel 2 <|
         column
             []
-            [ html <|
+            [ row []
+                [ text <| doWithCurrentNote model "" .title ]
+            , html <|
                 Html.div [ Attr.style "width" "100%" ]
                     [ Html.div
                         [ Attr.id "editor-wrapper"
@@ -295,22 +301,22 @@ editorPanel model =
                     ]
             , row [ spacing 5 ]
                 [ simpleButton ToggleDisplayMarkdown "toggle display"
-                , simpleButton (doWithCurrentNote model SetNote) "save current note"
-                , simpleButton (doWithCurrentNote model (\n -> GetNote n.id)) "get current note"
+                , simpleButton (withNoteMsg SetNote) "save current note"
+                , simpleButton (withNoteMsg (\n -> GetNote n.id)) "get current note"
                 ]
             ]
 
 
 {-| Send a msg with current note if it isn't nothing
 -}
-doWithCurrentNote : Model -> (Note -> Msg) -> Msg
-doWithCurrentNote model msg =
+doWithCurrentNote : Model -> a -> (Note -> a) -> a
+doWithCurrentNote model default msg =
     case model.currentNote of
         Just note ->
             msg note
 
         Nothing ->
-            NoOp
+            default
 
 
 simpleButton : Msg -> String -> Element Msg
@@ -322,7 +328,9 @@ simpleButton msg title =
         , paddingXY 10 5
         , width fill
         ]
-        { onPress = Just msg, label = text title }
+        { onPress = Just msg
+        , label = el [ centerX ] <| text title
+        }
 
 
 heading1 : String -> Element msg
@@ -330,7 +338,7 @@ heading1 title =
     el
         [ Font.size 38
         , paddingXY 0 20
-        , Font.family [ Font.serif ]
+        , Font.family [ Font.typeface "Verdana" ]
         ]
     <|
         text title

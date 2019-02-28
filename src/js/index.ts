@@ -23,3 +23,4 @@ setupEditor(
   app.ports.setContentPort.subscribe,
   document.getElementById('editor-wrapper') as HTMLDivElement
 );
+
