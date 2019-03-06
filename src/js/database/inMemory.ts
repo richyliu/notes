@@ -1,34 +1,23 @@
 import { Database, Note, Id, Tag } from '../database';
 
-interface InternalNote {
-  note: Note;
-  tags: Tag[];
-}
-
-let notes: { [key: string]: InternalNote } = {
+let notes: { [key: string]: Note } = {
   xyus23ei: {
-    note: {
-      content: 'bar baz\n\nhello world',
-      id: 'xyus23ei',
-      title: 'Bar baz',
-    },
-    tags: [{ tag: '@All' }, { tag: 'foo' }, { tag: 'bar' }, { tag: 'baz' }],
+    content: 'bar baz\n\nhello world',
+    id: 'xyus23ei',
+    title: 'Bar baz',
+    tags: ['@All', 'foo', 'bar', 'baz'],
   },
   ImwmPGfDkl: {
-    note: {
-      content: '# foo\nbar baz more text lmao what a troll',
-      id: 'ImwmPGfDkl',
-      title: 'The foo',
-    },
-    tags: [{ tag: '@All' }, { tag: 'foo' }],
+    content: '# foo\nbar baz more text lmao what a troll',
+    id: 'ImwmPGfDkl',
+    title: 'The foo',
+    tags: ['@All', 'foo'],
   },
   yrstr: {
-    note: {
-      content: '# foo\nbar baz more text',
-      id: 'yrstr',
-      title: 'Foo bar',
-    },
-    tags: [{ tag: '@All' }],
+    content: '# foo\nbar baz more text',
+    id: 'yrstr',
+    title: 'Foo bar',
+    tags: ['@All'],
   },
 };
 window['notes'] = notes;
@@ -38,11 +27,11 @@ const InMemory: Database = {
     return Boolean(id in notes);
   },
   async getNote(id: Id) {
-    if (await this.isNote(id)) return notes[id].note;
+    if (await this.isNote(id)) return notes[id];
     else return { msg: `Note id: ${id} does not exist.` };
   },
   async setNote(id: Id, note: Note) {
-    notes[id].note = note;
+    notes[id] = note;
     return undefined;
   },
   async addNote(note: string) {
@@ -54,25 +43,16 @@ const InMemory: Database = {
     return id;
   },
   async getTags(id: Id) {
-    if (await this.isNote(id))
-      return [...new Set(notes[id].tags.map(tag => tag.tag))].map(tag => ({
-        tag,
-      }));
+    if (await this.isNote(id)) return [...new Set(notes[id].tags)];
     else return { msg: `Note id: "${id}" does not exist.` };
   },
   async getAllTags() {
-    return [
-      ...new Set(
-        Object.values(notes).flatMap(note => note.tags.map(tag => tag.tag))
-      ),
-    ].map(tag => ({ tag }));
+    return [...new Set(Object.values(notes).flat())];
   },
   async getNotesByTags(tags: Tag[]) {
-    return Object.values(notes)
-      .filter(note =>
-        tags.some(tag => note.tags.map(t => t.tag).includes(tag.tag))
-      )
-      .map(note => note.note);
+    return Object.values(notes).filter(note =>
+      tags.some(tag => note.tags.includes(tag))
+    );
   },
 };
 

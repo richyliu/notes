@@ -13,14 +13,15 @@ const app = Elm.Main.init({
 });
 
 /* Setup one of the databases */
-setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, InMemory);
-// setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, Parse);
-// setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, LocalStorage);
-
-/* Setup the Codemirror editor */
-setupEditor(
-  app.ports.toElmPort.send,
-  app.ports.setContentPort.subscribe,
-  document.getElementById('editor-wrapper') as HTMLDivElement
+// setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, InMemory).then(
+// setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, Parse).then(
+setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, LocalStorage).then(
+  () => {
+    /* Setup the Codemirror editor */
+    setupEditor(
+      app.ports.toElmPort.send,
+      app.ports.setContentPort.subscribe,
+      document.getElementById('editor-wrapper') as HTMLDivElement
+    );
+  }
 );
-

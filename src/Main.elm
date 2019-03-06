@@ -46,31 +46,6 @@ emptyNote =
     Note "" "" [] ""
 
 
-globalNotes : List Note
-globalNotes =
-    [ { id = "1"
-      , content = "# Note 1\nContent of note 1"
-      , title = "Note 1"
-      , tags = [ "Food", "Baz" ]
-      }
-    , { id = "2"
-      , content = "This is a very pointless note"
-      , title = "Note 2???"
-      , tags = [ "Food/Yuck" ]
-      }
-    , { id = "3"
-      , content = "# Note 3\n## Subtitle"
-      , title = "Note 3.5"
-      , tags = []
-      }
-    , { id = "4"
-      , content = "Note number 4"
-      , title = "Note 1"
-      , tags = [ "Food", "Food/Yuck", "Bar/Bar" ]
-      }
-    ]
-
-
 getTags : List Note -> List String
 getTags notes =
     List.foldr (\n list -> n.tags ++ list) [] notes
@@ -127,16 +102,26 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Change content ->
-            let
-                newCurrentNote =
-                    case model.currentNote of
-                        Just note ->
-                            Just { note | content = content }
+            ( case model.currentNote of
+                Just note ->
+                    { model
+                        | currentNote = Just { note | content = content }
+                        , notes =
+                            List.map
+                                (\n ->
+                                    if n.id == note.id then
+                                        { n | content = content }
 
-                        Nothing ->
-                            Nothing
-            in
-            ( { model | currentNote = newCurrentNote }, Cmd.none )
+                                    else
+                                        n
+                                )
+                                model.notes
+                    }
+
+                Nothing ->
+                    model
+            , Cmd.none
+            )
 
         ToggleDisplayMarkdown ->
             ( { model | displayMarkdown = not model.displayMarkdown }, Cmd.none )
@@ -145,7 +130,7 @@ update msg model =
             ( { model | messages = str :: model.messages }, Cmd.none )
 
         SetNote note ->
-            ( model, Db.send "UpdateNote" "" [ note.id, note.title, note.content ] )
+            ( model, Db.send "UpdateNote" "" [ note.id, note.title, String.join "," note.tags, note.content ] )
 
         GetNote id ->
             ( model, Db.send "GetNote" "" [ id ] )
@@ -155,7 +140,7 @@ update msg model =
                 | tags = tags
 
                 -- TODO get notes based on the new current tag using Bunch
-                , currentTag = Debug.log "tags" (List.head tags)
+                , currentTag = Debug.log "[elm]: tags" (List.head tags)
               }
             , Cmd.none
             )
@@ -167,11 +152,7 @@ update msg model =
             ( { model | notes = notes }, Cmd.none )
 
         SetCurrentNote note ->
-            let
-                ( updated, command ) =
-                    update (Change note.content) model
-            in
-            ( { updated | currentNote = Just note }, EditorPorts.setContent note.content )
+            ( { model | currentNote = Just note }, EditorPorts.setContent note.content )
 
         SetCurrentTag tag ->
             let
@@ -283,9 +264,11 @@ editorPanel model =
     in
     panel 2 <|
         column
-            []
-            [ row []
-                [ text <| doWithCurrentNote model "" .title ]
+            [ width fill ]
+            [ row [ width fill, paddingXY 0 10 ]
+                [ el [ width fill, Font.family [ Font.monospace ] ] <| text <| "Name: " ++ doWithCurrentNote model "" .title
+                , el [ width fill, Font.family [ Font.monospace ] ] <| text <| "Id: " ++ doWithCurrentNote model "" .id
+                ]
             , html <|
                 Html.div [ Attr.style "width" "100%" ]
                     [ Html.div
@@ -391,6 +374,7 @@ handleDb { type_, datatype, data } =
                             in
                             case note of
                                 Just actualNote ->
+                                    -- TODO batch an AddMessage with this
                                     SetCurrentNote actualNote
 
                                 Nothing ->

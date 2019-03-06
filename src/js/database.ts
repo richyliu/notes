@@ -1,17 +1,16 @@
 export type Id = string;
-export interface Tag {
-  tag: string;
-}
+export type Tag = string;
 export interface Note {
   content: string;
   id: Id;
   title: string;
+  tags: Tag[];
 }
 export interface Error {
   msg: string;
 }
 
-function isError(obj: any): obj is Error {
+export function isError(obj: any): obj is Error {
   return 'msg' in obj;
 }
 
@@ -33,6 +32,8 @@ export interface Database {
   getAllTags(): Promise<Tag[] | Error>;
   /* Get notes */
   getNotesByTags(tags: Tag[]): Promise<Note[] | Error>;
+  /* Setup the database */
+  setup?(): Promise<void>;
 }
 
 interface ElmMsg {
@@ -41,11 +42,13 @@ interface ElmMsg {
   data: string[];
 }
 
-export default function setup(
+export default async function setup(
   sendIn: (content: ElmMsg) => void,
   subscribe: (cb: (content: ElmMsg) => void) => void,
   db: Database
 ) {
+  if ('setup' in db) await db.setup();
+
   const send = (t, dt, d) => sendIn({ type_: t, datatype: dt, data: d });
 
   subscribe(({ type_, data }) => {
@@ -55,7 +58,6 @@ export default function setup(
         db.getNote(data0).then(note => {
           if (isError(note)) send('GetNote', 'error', [note.msg]);
           else {
-            // TODO send id/tag info along?
             db.getTags(data0).then(tags => {
               if (isError(tags)) send('GetNote', '', [tags.msg]);
               else send('GetNote', '', [formatFullNote(note, tags)]);
@@ -65,7 +67,12 @@ export default function setup(
         break;
 
       case 'UpdateNote':
-        db.setNote(data0, { content: data[2], id: data0, title: data[1] }).then(err => {
+        db.setNote(data0, {
+          content: data[3],
+          id: data0,
+          title: data[1],
+          tags: data[2].split(','),
+        }).then(err => {
           if (err) send('UpdateNote', 'error', [err.msg]);
           else send('UpdateNote', 'message', ['Successfully updated note!']);
         });
@@ -89,19 +96,20 @@ export default function setup(
       case 'GetTags':
         db.getTags(data0).then(tags => {
           if (isError(tags)) send('GetTags', 'error', [tags.msg]);
-          else send('GetTags', '', tags.map(t => t.tag));
+          else send('GetTags', '', tags);
         });
         break;
 
       case 'GetAllTags':
         db.getAllTags().then(tags => {
           if (isError(tags)) send('GetAllTags', 'error', [tags.msg]);
-          else send('GetAllTags', '', tags.map(t => t.tag));
+          else send('GetAllTags', '', tags);
         });
         break;
 
       case 'GetNotesByTags':
-        db.getNotesByTags(data.map(t => ({ tag: t }))).then(notes => {
+        db.getNotesByTags(data).then(notes => {
+          console.log(notes)
           if (isError(notes)) send('GetNotesByTags', 'error', [notes.msg]);
           else {
             Promise.all(notes.map(note => db.getTags(note.id))).then(
@@ -138,7 +146,7 @@ export default function setup(
 function formatFullNote(note: Note, tags: Tag[]): string {
   return `---
 id: ${note.id}
-tags: ${tags.map(t => t.tag).join(',')}
+tags: ${tags.join(',')}
 title: ${note.title}
 ---
 ${note.content}`;
