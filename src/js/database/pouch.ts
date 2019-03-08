@@ -1,4 +1,5 @@
 import { Database, Note, Id, Tag } from '../database';
+import * as PouchDB from 'pouchdb';
 
 let notes: { [key: string]: Note } = {
   xyus23ei: {
@@ -23,7 +24,7 @@ let notes: { [key: string]: Note } = {
 // for debug purposes
 window['notes'] = notes;
 
-const InMemory: Database = {
+const Pouch: Database = {
   async isNote(id: Id) {
     return Boolean(id in notes);
   },
@@ -57,4 +58,4 @@ const InMemory: Database = {
   },
 };
 
-export default InMemory;
+export default Pouch;

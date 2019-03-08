@@ -17,15 +17,12 @@ const LocalStorage: Database = {
     else return { msg: `Note id: ${id} does not exist.` };
   },
   async setNote(id: string, note: Note) {
-    const oldNote = await this.getNote(id);
-    if (note.id !== oldNote.id)
-      return { msg: `Cannot change the id of note with id: ${id}` };
-    setItem(id, { ...oldNote, ...note });
-    return undefined;
+    setItem(id, note);
+    return;
   },
-  async addNote(note: string) {
+  async addNote(note: Note) {
     const id = (Math.random() + '').slice(2);
-    await this.setNote(id, note);
+    await this.setNote(id, { ...note, id });
     const currentNotes = [...(getItem(allNotes) as Id[]), id];
     setItem(allNotes, currentNotes);
     return id;
@@ -53,30 +50,29 @@ const LocalStorage: Database = {
     return notes.filter(note => tags.some(tag => note.tags.includes(tag)));
   },
   async setup() {
-    return;
     let initialNotes: Note[] = [
       {
         content: 'bar baz\n\nhello world',
-        id: 'xyus23ei',
+        id: '',
         title: 'Bar baz',
         tags: ['@All', 'foo', 'bar', 'baz'],
       },
       {
         content: '# foo\nbar baz more text lmao what a troll',
-        id: 'ImwmPGfDkl',
+        id: '',
         title: 'The foo',
         tags: ['@All', 'foo'],
       },
       {
         content: '# foo\nbar baz more text',
-        id: 'yrstr',
+        id: '',
         title: 'Foo bar',
-        tags: ['@All'],
+        tags: ['@All', 'foo/hello', 'this_is_foo'],
       },
     ];
 
-    setItem(allNotes, initialNotes.map(n => n.id));
-    initialNotes.forEach(n => setItem(n.id, n));
+    setItem(allNotes, []);
+    await Promise.all(initialNotes.map(n => this.addNote(n)));
     console.log('[js]: Set up localStorage database with new data');
   },
 };

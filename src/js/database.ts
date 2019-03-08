@@ -1,4 +1,5 @@
 export type Id = string;
+// Can only contain the following: a-z, A-Z, 0-9, _, /
 export type Tag = string;
 export interface Note {
   content: string;
@@ -23,9 +24,9 @@ export interface Database {
   /* Get the note with id or returns Error */
   getNote(id: Id): Promise<Note | Error>;
   /* Set the note, undefined on success or Error */
-  setNote(id: Id, note: Note): Promise<Error | undefined>;
+  setNote(id: Id, note: Note): Promise<Error | void>;
   /* Add a note returning id or Error */
-  addNote(note: string): Promise<Id | Error>;
+  addNote(note: Note): Promise<Id | Error>;
   /* Get tags for a given note id */
   getTags(id: string): Promise<Tag[] | Error>;
   /* Get all the tags */
@@ -45,9 +46,10 @@ interface ElmMsg {
 export default async function setup(
   sendIn: (content: ElmMsg) => void,
   subscribe: (cb: (content: ElmMsg) => void) => void,
-  db: Database
+  db: Database,
+  runSetup = false
 ) {
-  if ('setup' in db) await db.setup();
+  if (runSetup && 'setup' in db) await db.setup();
 
   const send = (t, dt, d) => sendIn({ type_: t, datatype: dt, data: d });
 
@@ -87,10 +89,13 @@ export default async function setup(
         break;
 
       case 'AddNote':
-        db.addNote(data0).then(id => {
-          if (isError(id)) send('AddNote', 'error', [id.msg]);
-          else send('AddNote', '', [id]);
-        });
+        const note = unFormatFullNote(data0);
+        if (isError(note)) send('AddNote', 'error', [note.msg]);
+        else
+          db.addNote(note).then(id => {
+            if (isError(id)) send('AddNote', 'error', [id.msg]);
+            else send('AddNote', '', [id]);
+          });
         break;
 
       case 'GetTags':
@@ -109,7 +114,6 @@ export default async function setup(
 
       case 'GetNotesByTags':
         db.getNotesByTags(data).then(notes => {
-          console.log(notes)
           if (isError(notes)) send('GetNotesByTags', 'error', [notes.msg]);
           else {
             Promise.all(notes.map(note => db.getTags(note.id))).then(
@@ -150,4 +154,19 @@ tags: ${tags.join(',')}
 title: ${note.title}
 ---
 ${note.content}`;
+}
+
+/**
+ * Get the note from a formatted note string
+ */
+function unFormatFullNote(note: string): Note | Error {
+  const lines = note.split('\n');
+  if (note.length < 6) return { msg: `Incorrectly formatted note: ${note}` };
+
+  return {
+    id: lines[1].slice(4),
+    tags: lines[2].slice(6).split(','),
+    title: lines[3].slice(7),
+    content: lines.slice(5).join('\n'),
+  };
 }
