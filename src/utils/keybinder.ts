@@ -8,7 +8,9 @@ export function bind(cb: (action: Action) => void): () => void {
   const regularizer = (e: KeyboardEvent) => {
     Config.shortcuts.forEach(s => {
       if (
-        (s.linux && s.linux.key === e.key && s.linux.altKey === e.altKey) ||
+        (s.linux &&
+          s.linux.key === e.key &&
+          (s.linux.altKey === e.altKey || s.linux.ctrlKey === e.ctrlKey)) ||
         (s.ios && s.ios.key === e.key)
       ) {
         e.preventDefault();

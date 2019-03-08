@@ -7,6 +7,7 @@
     "start": "parcel serve -p 8000 index.html",
     "build": "parcel build index.html",
     "prod": "parcel build index.html --no-source-maps",
+    "self-server": "cd dist/ && python3 -m http.server && cd ..",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -16,6 +17,7 @@
     "@types/codemirror": "0.0.71",
     "@types/katex": "^0.5.0",
     "@types/mermaid": "^8.0.0",
+    "@types/prismjs": "^1.9.0",
     "@types/react": "^16.7.18",
     "@types/react-dom": "^16.0.11",
     "@types/showdown": "^1.9.1",
@@ -32,6 +34,7 @@
     "highlight.js": "^9.13.1",
     "katex": "^0.10.0",
     "mermaid": "^8.0.0",
+    "prismjs": "^1.15.0",
     "react": "^16.8.0-alpha.1",
     "react-codemirror2": "^5.1.0",
     "react-dom": "^16.8.0-alpha.1",

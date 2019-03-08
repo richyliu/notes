@@ -44,7 +44,11 @@ export type KeyActions = KeyAction[];
 const shortcuts: KeyActions = [
   {
     ios: { key: 'µ' },
-    linux: { key: 'm', altKey: true },
+    linux: { key: 'm', ctrlKey: true },
+    action: 'toggle-editor-view',
+  },
+  {
+    linux: { key: 'p', ctrlKey: true },
     action: 'toggle-editor-view',
   },
 ];

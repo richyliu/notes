@@ -10,6 +10,7 @@ import MenuBar from './menuBar';
 import * as Keybinder from '../../utils/keybinder';
 import { NoteInfo } from '../../utils/notes';
 import lsdb from '../../database/localStorageDb';
+import convertMd from '../../utils/convertMd';
 
 interface EditorStyledProps {
   show: boolean;
@@ -42,11 +43,11 @@ const EditorWrapper: React.FC<EditorWrapperProps> = ({ note }) => {
         switch (action) {
           case 'toggle-editor-view':
             if (html !== '') setHtml('');
-            else setHtml(val);
+            else convertMd(val).then(setHtml);
             break;
         }
       }),
-    [html, setHtml]
+    [val, html, setHtml]
   );
 
   // focus on element when coming back

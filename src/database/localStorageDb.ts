@@ -56,7 +56,7 @@ const lsdb: StandardDatabase = {
 
     // if setting new note or note tags have changed
     if (
-      !(await this.isNote(note.info.id)) ||
+      !await this.isNote(note.info.id) ||
       ((await this.getNote(note.info.id)) as Note).info.tags.toString() !==
         note.info.tags.toString()
     ) {
@@ -70,10 +70,11 @@ const lsdb: StandardDatabase = {
       );
 
       // add note back to new storedTags list
-      note.info.tags.forEach(tag =>
-        Object.keys(storedTags).includes(tag)
-          ? storedTags[tag].push(note.info)
-          : (storedTags[tag] = [note.info])
+      note.info.tags.forEach(
+        tag =>
+          Object.keys(storedTags).includes(tag)
+            ? storedTags[tag].push(note.info)
+            : (storedTags[tag] = [note.info])
       );
 
       // remove tags that don't have any noteInfos
@@ -111,9 +112,7 @@ const lsdb: StandardDatabase = {
   },
 
   async generateId() {
-    return await Math.random()
-      .toString(16)
-      .slice(2);
+    return await Math.random().toString(16).slice(2);
   },
   async setup() {
     await this.setStoredTags({});
