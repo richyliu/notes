@@ -17,8 +17,8 @@ async function main() {
   /* Setup one of the databases */
   // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, InMemory)
   // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, Parse)
-  // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, LocalStorage);
-  await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, Pouch);
+  await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, LocalStorage, false);
+  // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, Pouch);
 
   /* Setup the Codemirror editor */
   setupEditor(

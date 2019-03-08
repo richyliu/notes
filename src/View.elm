@@ -4,7 +4,7 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
-import Element.Input exposing (button)
+import Element.Input as Input
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Markdown exposing (defaultOptions)
@@ -57,6 +57,7 @@ appHome model =
         [ tagsPanel model
         , notesListPanel model
         , editorPanel model
+        , messagePanel model
         ]
 
 
@@ -75,20 +76,44 @@ panel size contents =
         contents
 
 
+messagePanel : Model -> Element Msg
+messagePanel model =
+    panel 1 <|
+        column [ spacing 5, width fill ] <|
+            heading1 "Messages"
+                :: List.map (\m -> text m) model.messages
+
+
 tagsPanel : Model -> Element Msg
 tagsPanel model =
-    panel 1 <|
+    panel 2 <|
         column [ spacing 10, width fill ] <|
             heading1 "Tags"
-                :: List.map (\t -> simpleButton (SetCurrentTag t) t) model.tags
+                :: List.map
+                    (\tag ->
+                        simpleButton
+                            (Batch [ SetCurrentTag tag, GetNotesByTags [ tag ] ])
+                            tag
+                    )
+                    model.tags
 
 
 notesListPanel : Model -> Element Msg
 notesListPanel model =
-    panel 1 <|
+    panel 2 <|
         column [ spacing 10, width fill ] <|
-            heading1 "Notes"
-                :: List.map (\n -> simpleButton (SetCurrentNote n) n.title) model.notes
+            [ heading1 "Notes"
+            , searchInput SetNoteSearch "Search (title and contents)" model.noteSearch
+            ]
+                ++ (model.notes
+                        |> List.filter
+                            -- TODO: can search by just title or title AND content, add config
+                            ((\n -> n.title ++ n.content)
+                                >> String.toLower
+                                >> (String.contains <| String.toLower model.noteSearch)
+                            )
+                        |> List.map (\n -> simpleButton (SetCurrentNote n) n.title)
+                   )
 
 
 editorPanel : Model -> Element Msg
@@ -97,12 +122,13 @@ editorPanel model =
         withNoteMsg =
             doWithCurrentNote model NoOp
     in
-    panel 2 <|
+    panel 4 <|
         column
             [ width fill ]
             [ row [ width fill, paddingXY 0 10 ]
-                [ el [ width fill, Font.family [ Font.monospace ] ] <| text <| "Name: " ++ doWithCurrentNote model "" .title
-                , el [ width fill, Font.family [ Font.monospace ] ] <| text <| "Id: " ++ doWithCurrentNote model "" .id
+                [ searchInput SetTitle "Title" <| doWithCurrentNote model "" .title
+                , simpleText <| "Id: " ++ doWithCurrentNote model "" .id
+                , simpleText <| "Tags: " ++ doWithCurrentNote model "" (\n -> String.join ", " n.tags)
                 ]
             , html <|
                 Html.div [ Attr.style "width" "100%" ]
@@ -119,10 +145,17 @@ editorPanel model =
                     ]
             , row [ spacing 5 ]
                 [ simpleButton ToggleDisplayMarkdown "toggle display"
-                , simpleButton (withNoteMsg SetNote) "save current note"
-                , simpleButton (withNoteMsg (\n -> GetNote n.id)) "get current note"
+                , simpleButton Sync "sync"
+
+                -- TODO: finish
+                , simpleButton NoOp "add note"
                 ]
             ]
+
+
+simpleText : String -> Element Msg
+simpleText content =
+    el [ width fill, Font.family [ Font.monospace ] ] <| text content
 
 
 {-| Send a msg with current note if it isn't nothing
@@ -139,7 +172,7 @@ doWithCurrentNote model default msg =
 
 simpleButton : Msg -> String -> Element Msg
 simpleButton msg title =
-    button
+    Input.button
         [ Border.color <| rgb 0 0 0
         , Border.width 2
         , Border.rounded 5
@@ -148,6 +181,16 @@ simpleButton msg title =
         ]
         { onPress = Just msg
         , label = el [ centerX ] <| text title
+        }
+
+
+searchInput : (String -> Msg) -> String -> String -> Element Msg
+searchInput onChange placeholder current =
+    Input.search []
+        { onChange = onChange
+        , text = current
+        , placeholder = Just <| Input.placeholder [] <| text placeholder
+        , label = Input.labelHidden placeholder
         }
 
 

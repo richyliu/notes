@@ -1,25 +1,6 @@
 import { Database, Note, Id, Tag } from '../database';
 
-let notes: { [key: string]: Note } = {
-  xyus23ei: {
-    content: 'bar baz\n\nhello world',
-    id: 'xyus23ei',
-    title: 'Bar baz',
-    tags: ['@All', 'foo', 'bar', 'baz'],
-  },
-  ImwmPGfDkl: {
-    content: '# foo\nbar baz more text lmao what a troll',
-    id: 'ImwmPGfDkl',
-    title: 'The foo',
-    tags: ['@All', 'foo'],
-  },
-  yrstr: {
-    content: '# foo\nbar baz more text',
-    id: 'yrstr',
-    title: 'Foo bar',
-    tags: ['@All'],
-  },
-};
+let notes: { [key: string]: Note } = {};
 // for debug purposes
 window['notes'] = notes;
 
@@ -54,6 +35,29 @@ const InMemory: Database = {
     return Object.values(notes).filter(note =>
       tags.some(tag => note.tags.includes(tag))
     );
+  },
+  async sync() {},
+  async startup() {
+    notes = {
+      xyus23ei: {
+        content: 'bar baz\n\nhello world',
+        id: 'xyus23ei',
+        title: 'Bar baz',
+        tags: ['@All', 'foo', 'bar', 'baz'],
+      },
+      ImwmPGfDkl: {
+        content: '# foo\nbar baz more text lmao what a troll',
+        id: 'ImwmPGfDkl',
+        title: 'The foo',
+        tags: ['@All', 'foo'],
+      },
+      yrstr: {
+        content: '# foo\nbar baz more text',
+        id: 'yrstr',
+        title: 'Foo bar',
+        tags: ['@All'],
+      },
+    };
   },
 };
 

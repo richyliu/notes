@@ -23,6 +23,7 @@ init _ =
       , messages = []
       , currentNote = Nothing
       , currentTag = Nothing
+      , noteSearch = ""
       , notes = []
       , tags = []
       , searchStr = Nothing

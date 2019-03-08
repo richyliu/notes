@@ -50,7 +50,6 @@ handleDb { type_, datatype, data } =
                             in
                             case note of
                                 Just actualNote ->
-                                    -- TODO batch an AddMessage with this
                                     SetCurrentNote actualNote
 
                                 Nothing ->
@@ -67,11 +66,23 @@ handleDb { type_, datatype, data } =
                         Nothing ->
                             NoOp
 
+                -- get all the tags, and get all the notes of the first tag
                 "GetAllTags" ->
-                    SetAllTags data
+                    Batch
+                        [ SetAllTags data
+                        , case List.head data of
+                            Just firstTag ->
+                                GetNotesByTags [ firstTag ]
+
+                            Nothing ->
+                                NoOp
+                        ]
 
                 "GetNotesByTags" ->
                     SetNotes <| List.filterMap getNoteFromContent data
+
+                "Sync" ->
+                    AddMessage <| String.join "" data
 
                 "JsonParseError" ->
                     AddMessage <| "Database received could not be parsed correctly by Elm with error: " ++ String.join ", " data

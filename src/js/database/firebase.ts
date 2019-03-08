@@ -23,6 +23,7 @@ const LocalStorage: Database = {
     return { msg: `Unimplemented` };
   },
   async setup() {},
+  async startup() {},
 };
 
 export default LocalStorage;

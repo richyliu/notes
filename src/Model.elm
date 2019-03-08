@@ -18,6 +18,7 @@ type alias Model =
     , messages : List String
     , currentNote : Maybe Note
     , currentTag : Maybe Tag
+    , noteSearch : String
     , notes : List Note
     , tags : List Tag
     , searchStr : Maybe String

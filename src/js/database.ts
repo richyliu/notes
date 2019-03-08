@@ -33,8 +33,12 @@ export interface Database {
   getAllTags(): Promise<Tag[] | Error>;
   /* Get notes */
   getNotesByTags(tags: Tag[]): Promise<Note[] | Error>;
+  /* Sync to another database */
+  sync(): Promise<Error | void>;
   /* Setup the database */
   setup?(): Promise<void>;
+  /* Start up the database, doing initial work */
+  startup(): Promise<void>;
 }
 
 interface ElmMsg {
@@ -76,7 +80,7 @@ export default async function setup(
           tags: data[2].split(','),
         }).then(err => {
           if (err) send('UpdateNote', 'error', [err.msg]);
-          else send('UpdateNote', 'message', ['Successfully updated note!']);
+          else send('UpdateNote', '', []);
         });
         break;
 
@@ -134,6 +138,13 @@ export default async function setup(
               }
             );
           }
+        });
+        break;
+
+      case 'Sync':
+        db.sync().then(error => {
+          if (isError(error)) send('Sync', 'error', [error.msg]);
+          else send('Sync', '', 'Sync was successfull');
         });
         break;
 

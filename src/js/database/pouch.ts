@@ -56,6 +56,7 @@ const Pouch: Database = {
       tags.some(tag => note.tags.includes(tag))
     );
   },
+  async startup() {},
 };
 
 export default Pouch;

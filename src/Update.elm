@@ -6,9 +6,11 @@ import Model exposing (..)
 
 
 type Msg
-    = Change String
+    = ChangeInternal String
+    | Change String
     | ToggleDisplayMarkdown
     | AddMessage String
+    | SaveCurrentNote
     | SetNote Note
     | GetNote String
     | SetAllTags (List Tag)
@@ -16,14 +18,18 @@ type Msg
     | SetNotes (List Note)
     | SetCurrentNote Note
     | SetCurrentTag Tag
-    | Bunch (List Msg)
+    | Sync
+    | SetNoteSearch String
+    | SetTitleInternal String
+    | SetTitle String
+    | Batch (List Msg)
     | NoOp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Change content ->
+        ChangeInternal content ->
             ( case model.currentNote of
                 Just note ->
                     { model
@@ -45,11 +51,22 @@ update msg model =
             , Cmd.none
             )
 
+        Change content ->
+            update (Batch [ ChangeInternal content, SaveCurrentNote ]) model
+
         ToggleDisplayMarkdown ->
             ( { model | displayMarkdown = not model.displayMarkdown }, Cmd.none )
 
         AddMessage str ->
             ( { model | messages = str :: model.messages }, Cmd.none )
+
+        SaveCurrentNote ->
+            case model.currentNote of
+                Just note ->
+                    update (SetNote note) model
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         SetNote note ->
             ( model, Db.send "UpdateNote" "" [ note.id, note.title, String.join "," note.tags, note.content ] )
@@ -60,9 +77,7 @@ update msg model =
         SetAllTags tags ->
             ( { model
                 | tags = tags
-
-                -- TODO get notes based on the new current tag using Bunch
-                , currentTag = Debug.log "[elm]: tags" (List.head tags)
+                , currentTag = List.head tags
               }
             , Cmd.none
             )
@@ -77,14 +92,29 @@ update msg model =
             ( { model | currentNote = Just note }, EditorPorts.setContent note.content )
 
         SetCurrentTag tag ->
-            let
-                ( updated, command ) =
-                    update (GetNotesByTags [ tag ]) model
-            in
-            ( { updated | currentTag = Just tag }, command )
+            ( { model | currentTag = Just tag }, Cmd.none )
 
-        Bunch msgs ->
-            List.foldr
+        Sync ->
+            ( model, Db.send "Sync" "" [] )
+
+        SetNoteSearch search ->
+            ( { model | noteSearch = search }, Cmd.none )
+
+        SetTitleInternal title ->
+            ( case model.currentNote of
+                Just note ->
+                    { model | currentNote = Just { note | title = title } }
+
+                Nothing ->
+                    model
+            , Cmd.none
+            )
+
+        SetTitle title ->
+            update (Batch [ SetTitleInternal title, SaveCurrentNote ]) model
+
+        Batch msgs ->
+            List.foldl
                 (\curMsg ( curModel, prevCommand ) ->
                     let
                         ( updatedModel, newCommand ) =

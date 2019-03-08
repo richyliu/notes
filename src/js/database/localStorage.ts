@@ -49,6 +49,10 @@ const LocalStorage: Database = {
 
     return notes.filter(note => tags.some(tag => note.tags.includes(tag)));
   },
+  async sync() {
+    return { msg: 'Not implemented' };
+  },
+  async startup() {},
   async setup() {
     let initialNotes: Note[] = [
       {
@@ -68,6 +72,12 @@ const LocalStorage: Database = {
         id: '',
         title: 'Foo bar',
         tags: ['@All', 'foo/hello', 'this_is_foo'],
+      },
+      {
+        content: '# foo',
+        id: '',
+        title: 'All tags!!',
+        tags: ['@All', 'foo/hello', 'this_is_foo', 'foo', 'bar', 'baz'],
       },
     ];
 
