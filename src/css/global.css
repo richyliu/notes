@@ -2,3 +2,8 @@ body {
     margin: 0px;
     padding: 0px;
 }
+
+/* Actual Codemirror editor */
+#editor-wrapper > div {
+  height: calc(100vh - 419px);
+}

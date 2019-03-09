@@ -4,7 +4,7 @@
   "description": "Web app with offline capabilities for writing notes and syncing",
   "main": "src/index.js",
   "scripts": {
-    "start": "parcel watch ./src/index.html --no-hmr & live-server --port=8000 ./dist/",
+    "start": "parcel watch ./src/index.html --no-hmr & live-server --no-browser --port=8000 ./dist/",
     "build": "rm -r ./dist/; parcel build --no-minify ./src/index.html",
     "prod": "rm -r ./dist/; parcel build --no-source-maps ./src/index.html",
     "local-server": "http-server ./dist/ -o -p 8000"

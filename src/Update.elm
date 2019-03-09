@@ -6,7 +6,7 @@ import Model exposing (..)
 
 
 type Msg
-    = ChangeInternal String
+    = UpdateCurrentNote Note
     | Change String
     | ToggleDisplayMarkdown
     | AddMessage String
@@ -20,8 +20,8 @@ type Msg
     | SetCurrentTag Tag
     | Sync
     | SetNoteSearch String
-    | SetTitleInternal String
     | SetTitle String
+    | SetTags (List Tag)
     | Batch (List Msg)
     | NoOp
 
@@ -29,30 +29,29 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ChangeInternal content ->
-            ( case model.currentNote of
-                Just note ->
-                    { model
-                        | currentNote = Just { note | content = content }
-                        , notes =
-                            List.map
-                                (\n ->
-                                    if n.id == note.id then
-                                        { n | content = content }
+        UpdateCurrentNote note ->
+            update SaveCurrentNote
+                { model
+                    | currentNote = Just note
+                    , notes =
+                        List.map
+                            (\n ->
+                                if n.id == note.id then
+                                    note
 
-                                    else
-                                        n
-                                )
-                                model.notes
-                    }
-
-                Nothing ->
-                    model
-            , Cmd.none
-            )
+                                else
+                                    n
+                            )
+                            model.notes
+                }
 
         Change content ->
-            update (Batch [ ChangeInternal content, SaveCurrentNote ]) model
+            case model.currentNote of
+                Just note ->
+                    update (UpdateCurrentNote { note | content = content }) model
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         ToggleDisplayMarkdown ->
             ( { model | displayMarkdown = not model.displayMarkdown }, Cmd.none )
@@ -100,18 +99,21 @@ update msg model =
         SetNoteSearch search ->
             ( { model | noteSearch = search }, Cmd.none )
 
-        SetTitleInternal title ->
-            ( case model.currentNote of
+        SetTitle title ->
+            case model.currentNote of
                 Just note ->
-                    { model | currentNote = Just { note | title = title } }
+                    update (UpdateCurrentNote { note | title = title }) model
 
                 Nothing ->
-                    model
-            , Cmd.none
-            )
+                    ( model, Cmd.none )
 
-        SetTitle title ->
-            update (Batch [ SetTitleInternal title, SaveCurrentNote ]) model
+        SetTags tags ->
+            case model.currentNote of
+                Just note ->
+                    update (UpdateCurrentNote { note | tags = tags }) model
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         Batch msgs ->
             List.foldl
