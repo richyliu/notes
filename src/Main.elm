@@ -27,6 +27,9 @@ init _ =
       , notes = []
       , tags = []
       , searchStr = Nothing
+      , view =
+            { messagesOpen = True
+            }
       }
     , Db.send "GetAllTags" "" []
     )

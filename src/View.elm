@@ -118,56 +118,48 @@ notesListPanel model =
 
 editorPanel : Model -> Element Msg
 editorPanel model =
-    let
-        withNoteMsg =
-            doWithCurrentNote model NoOp
-    in
     panel 4 <|
-        column
-            [ width fill ]
-            [ row [ width fill, paddingXY 0 10 ]
-                [ searchInput SetTitle "Title" <| doWithCurrentNote model "" .title
-                , simpleText <| "Id: " ++ doWithCurrentNote model "" .id
-                , simpleText <| "Tags: " ++ doWithCurrentNote model "" (\n -> String.join ", " n.tags)
-                ]
-            , html <|
-                Html.div [ Attr.style "width" "100%" ]
-                    [ Html.div
-                        [ Attr.id "editor-wrapper"
-                        , Attr.style "height" "300px"
-                        , Attr.style "margin-bottom" "10px"
-                        , Attr.style "display" <| boolToBlockOrNone <| not model.displayMarkdown
+        column [ width fill ] <|
+            case model.currentNote of
+                Just note ->
+                    [ column [ width fill, spacing 10, paddingXY 0 10 ]
+                        [ row [ width fill, spacing 10 ]
+                            [ searchInput SetTitle "Title" <| note.title
+                            , text <| "Id: " ++ String.slice 0 6 note.id ++ "..."
+                            ]
+                        , searchInput (String.split "," >> SetTags) "Tags" <| String.join "," model.tags
                         ]
-                        []
-                    , viewMarkdown
-                        (.content <| Maybe.withDefault emptyNote model.currentNote)
-                        model.displayMarkdown
+                    , html <|
+                        Html.div [ Attr.style "width" "100%" ]
+                            [ Html.div
+                                [ Attr.id "editor-wrapper"
+                                , Attr.style "margin-bottom" "10px"
+                                , Attr.style "display" <| boolToBlockOrNone <| not model.displayMarkdown
+                                ]
+                                []
+                            , viewMarkdown note.content model.displayMarkdown
+                            ]
+                    , row [ spacing 5 ]
+                        [ simpleButton ToggleDisplayMarkdown "toggle display"
+                        , simpleButton Sync "sync"
+
+                        -- TODO: finish
+                        , simpleButton NoOp "add note"
+                        ]
                     ]
-            , row [ spacing 5 ]
-                [ simpleButton ToggleDisplayMarkdown "toggle display"
-                , simpleButton Sync "sync"
 
-                -- TODO: finish
-                , simpleButton NoOp "add note"
-                ]
-            ]
+                Nothing ->
+                    [ text "Please select a note"
+                    , html <|
+                        Html.div
+                            [ Attr.style "visibility" "hidden" ]
+                            [ Html.div [ Attr.id "editor-wrapper" ] [] ]
+                    ]
 
 
-simpleText : String -> Element Msg
-simpleText content =
+monospaceText : String -> Element Msg
+monospaceText content =
     el [ width fill, Font.family [ Font.monospace ] ] <| text content
-
-
-{-| Send a msg with current note if it isn't nothing
--}
-doWithCurrentNote : Model -> a -> (Note -> a) -> a
-doWithCurrentNote model default msg =
-    case model.currentNote of
-        Just note ->
-            msg note
-
-        Nothing ->
-            default
 
 
 simpleButton : Msg -> String -> Element Msg

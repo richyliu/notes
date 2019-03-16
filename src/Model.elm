@@ -1,4 +1,4 @@
-module Model exposing (Model, Note, Tag, emptyNote)
+module Model exposing (Model, Note, Tag)
 
 
 type alias Tag =
@@ -22,9 +22,7 @@ type alias Model =
     , notes : List Note
     , tags : List Tag
     , searchStr : Maybe String
+    , view :
+        { messagesOpen : Bool
+        }
     }
-
-
-emptyNote : Note
-emptyNote =
-    Note "" "" [] ""
