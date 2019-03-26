@@ -5,6 +5,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
+import Element.Lazy as Lazy exposing (lazy)
 import Html exposing (Html)
 import Html.Attributes as Attr
 import Markdown exposing (defaultOptions)
@@ -12,36 +13,13 @@ import Model exposing (..)
 import Update exposing (..)
 
 
+
+-- Putting it all together
+
+
 view : Model -> Html Msg
 view model =
     Element.layout [] <| appHome model
-
-
-viewMarkdown : String -> Bool -> Html Msg
-viewMarkdown md shouldDisplay =
-    Html.div
-        [ Attr.style "display" <| boolToBlockOrNone shouldDisplay
-        , Attr.style "background" "white"
-        , Attr.style "padding" "10px"
-        ]
-        [ Markdown.toHtmlWith
-            { defaultOptions
-                | githubFlavored = Just { tables = True, breaks = True }
-                , defaultHighlighting = Just "javascript"
-                , sanitize = False
-            }
-            [ Attr.class "markdown-body" ]
-            md
-        ]
-
-
-boolToBlockOrNone : Bool -> String
-boolToBlockOrNone bool =
-    if bool then
-        "block"
-
-    else
-        "none"
 
 
 appHome : Model -> Element Msg
@@ -54,10 +32,10 @@ appHome model =
         , padding 10
         , Font.size 18
         ]
-        [ tagsPanel model
-        , notesListPanel model
-        , editorPanel model
-        , messagePanel model
+        [ lazy tagsPanel model
+        , lazy notesListPanel model
+        , lazy editorPanel model
+        , lazy messagePanel model
         ]
 
 
@@ -76,44 +54,85 @@ panel size contents =
         contents
 
 
+
+-- Messages panel
+
+
 messagePanel : Model -> Element Msg
 messagePanel model =
     panel 1 <|
         column [ spacing 5, width fill ] <|
-            heading1 "Messages"
-                :: List.map (\m -> text m) model.messages
+            [ heading1 "Messages" ]
+                ++ List.map (\m -> text m) model.messages
+                -- TODO: finish add note
+                ++ [ simpleButton NoOp "add note" ]
+
+
+
+-- Tags panel
 
 
 tagsPanel : Model -> Element Msg
 tagsPanel model =
+    let
+        edges =
+            { top = 0
+            , right = 0
+            , bottom = 0
+            , left = 0
+            }
+    in
     panel 2 <|
         column [ spacing 10, width fill ] <|
             heading1 "Tags"
-                :: List.map
-                    (\tag ->
-                        simpleButton
-                            (Batch [ SetCurrentTag tag, GetNotesByTags [ tag ] ])
-                            tag
-                    )
-                    model.tags
+                :: (model.tags
+                        |> List.sort
+                        |> List.map
+                            (\tag ->
+                                el
+                                    [ paddingEach
+                                        { edges
+                                            | left =
+                                                tag
+                                                    |> String.split "/"
+                                                    |> List.length
+                                                    |> (+) -1
+                                                    |> (*) 20
+                                        }
+                                    , width fill
+                                    ]
+                                <|
+                                    simpleButton
+                                        (Batch [ SetCurrentTag tag, GetNotesByTags [ tag ] ])
+                                        tag
+                            )
+                   )
+
+
+
+-- Notes list panel
 
 
 notesListPanel : Model -> Element Msg
 notesListPanel model =
+    let
+        containsIgnoreCase =
+            \a b -> String.contains (String.toLower a) (String.toLower b)
+    in
     panel 2 <|
         column [ spacing 10, width fill ] <|
             [ heading1 "Notes"
             , searchInput SetNoteSearch "Search (title and contents)" model.noteSearch
             ]
                 ++ (model.notes
-                        |> List.filter
-                            -- TODO: can search by just title or title AND content, add config
-                            ((\n -> n.title ++ n.content)
-                                >> String.toLower
-                                >> (String.contains <| String.toLower model.noteSearch)
-                            )
+                        -- TODO: allow for searching by just title or title AND content, add config
+                        |> List.filter ((\n -> n.title ++ n.content) >> containsIgnoreCase model.noteSearch)
                         |> List.map (\n -> simpleButton (SetCurrentNote n) n.title)
                    )
+
+
+
+-- Editor panel
 
 
 editorPanel : Model -> Element Msg
@@ -127,7 +146,7 @@ editorPanel model =
                             [ searchInput SetTitle "Title" <| note.title
                             , text <| "Id: " ++ String.slice 0 6 note.id ++ "..."
                             ]
-                        , searchInput (String.split "," >> SetTags) "Tags" <| String.join "," model.tags
+                        , searchInput (String.split "," >> SetTags) "Tags" <| String.join "," note.tags
                         ]
                     , html <|
                         Html.div [ Attr.style "width" "100%" ]
@@ -155,6 +174,33 @@ editorPanel model =
                             [ Attr.style "visibility" "hidden" ]
                             [ Html.div [ Attr.id "editor-wrapper" ] [] ]
                     ]
+
+
+viewMarkdown : String -> Bool -> Html Msg
+viewMarkdown md shouldDisplay =
+    Html.div
+        [ Attr.style "display" <| boolToBlockOrNone shouldDisplay
+        , Attr.style "background" "white"
+        , Attr.style "padding" "10px"
+        ]
+        [ Markdown.toHtmlWith
+            { defaultOptions
+                | githubFlavored = Just { tables = True, breaks = True }
+                , defaultHighlighting = Just "javascript"
+                , sanitize = False
+            }
+            [ Attr.class "markdown-body" ]
+            md
+        ]
+
+
+boolToBlockOrNone : Bool -> String
+boolToBlockOrNone bool =
+    if bool then
+        "block"
+
+    else
+        "none"
 
 
 monospaceText : String -> Element Msg

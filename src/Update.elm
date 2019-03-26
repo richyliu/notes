@@ -107,10 +107,16 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
+        -- TODO: Need to update master tags list too, perhaps do the updating here instead of in TS?
         SetTags tags ->
             case model.currentNote of
                 Just note ->
-                    update (UpdateCurrentNote { note | tags = tags }) model
+                    let
+                        ( newModel, command ) =
+                            update (UpdateCurrentNote { note | tags = tags }) model
+                    in
+                    -- TODO: related to above, current implementation inefficient
+                    ( newModel, Cmd.batch [ command, Db.send "GetAllTags" "" [] ] )
 
                 Nothing ->
                     ( model, Cmd.none )

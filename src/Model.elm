@@ -21,7 +21,6 @@ type alias Model =
     , noteSearch : String
     , notes : List Note
     , tags : List Tag
-    , searchStr : Maybe String
     , view :
         { messagesOpen : Bool
         }
