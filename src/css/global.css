@@ -5,5 +5,6 @@ body {
 
 /* Actual Codemirror editor */
 #editor-wrapper > div {
-  height: calc(100vh - 419px);
+  /* Allow editor to stretch app to fit screen height */
+  height: calc(100vh - 252px);
 }

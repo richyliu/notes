@@ -50,7 +50,7 @@ const LocalStorage: Database = {
     return notes.filter(note => tags.some(tag => note.tags.includes(tag)));
   },
   async sync() {
-    return { msg: 'Not implemented' };
+    return { msg: 'Sync is not yet implemented' };
   },
   async startup() {},
   async setup() {

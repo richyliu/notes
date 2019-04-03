@@ -36,7 +36,6 @@ init _ =
       , noteSearch = ""
       , notes = []
       , tags = []
-      , searchStr = Nothing
       , view =
             { messagesOpen = True
             }
