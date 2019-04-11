@@ -13,11 +13,12 @@ async function main() {
   const app = Elm.Main.init({
     node: document.getElementById('main'),
   });
+  window.app = app;
 
   /* Setup one of the databases */
   // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, InMemory)
   // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, Parse)
-  await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, LocalStorage, false);
+  // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, LocalStorage, false);
   // await setupDb(app.ports.dbIn.send, app.ports.dbOut.subscribe, Pouch);
 
   /* Setup the Codemirror editor */

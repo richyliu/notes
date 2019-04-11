@@ -2,7 +2,7 @@
  * Setup the editor and various keyboard shortcuts
  */
 
-import * as CodeMirror from 'codemirror';
+import CodeMirror from 'codemirror';
 import 'codemirror/lib/codemirror.css';
 import 'codemirror/theme/monokai.css';
 import 'codemirror/mode/markdown/markdown';
